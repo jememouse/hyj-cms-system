@@ -10,12 +10,21 @@ __pycache__/
 # System
 .DS_Store
 
-# Project Data
+# Project Data (Temporary Cache and Logs)
 trends_data.json
 generated_seo_data.json
-published_assets.json
-n8n_data/
-publish_config.json
-.cache/
 generated_seo_data.json.bak
+n8n_data/
+.cache/
+
+# Credentials (CRITICAL: NEVER TRACK IN GIT)
 service_account.json
+
+# IDE & AI Assistants / Local Workspace
+.idea/
+.vscode/
+.claude/
+.gemini/
+.antigravity/
+.cline/
+*.log

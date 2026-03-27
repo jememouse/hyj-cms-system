@@ -1,0 +1,320 @@
+{
+    "accounts": [
+        {
+            "username": "product_manager",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "packaging_helper",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "pack_info_expert",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "HY_xiao_jia",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "HY_post_pro",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "hy_cc1",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "box_art_nail",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "packaging_tech",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "Pack_info",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "hyj_ds1",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "pack_helper",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "BoxAdmin",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "PackPro",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "HYJ_Mod",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "TaDaMod",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "DieLine",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "PackGuru",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "BoxLead",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "CraftPack",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "FoldPro",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "BoxExpert",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "PackCraft",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "HYJ_Admin",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "TaDaExpert",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "FoldMaster",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "PackMod",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "BoxTech",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "1P_Master",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "ProBox",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "SmartBox",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        },
+        {
+            "username": "BoxDesign",
+            "password": "5227756c4aae247b",
+            "interval_minutes": 1,
+            "categories": {
+                "专业知识": 1,
+                "行业资讯": 1,
+                "产品介绍": 1
+            }
+        }
+    ],
+    "default_interval_minutes": 1,
+    "schema_config": {
+        "inject_faq_schema": true,
+        "inject_article_schema": false
+    },
+    "comment": "interval_minutes: 每篇文章发布后的等待时间（分钟）; schema_config: 控制是否注入结构化数据 (解决 GSC 重复字段问题)"
+}
