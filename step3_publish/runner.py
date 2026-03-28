@@ -140,11 +140,13 @@ def run(config_file: str = None):
             
             print(f"\n📂 分类: {category} (发布 {limit} 篇)")
             
-            # 获取该分类的 Pending 记录
+            # 获取该分类的 Pending 记录，优先获取最新(按生成时间倒序)记录
             records = client.fetch_records_by_status(
                 status=config.STATUS_PENDING,
                 category=category,
-                limit=limit
+                limit=limit,
+                sort_by_time_col="生成时间",
+                reverse_batch=True
             )
             
             if not records:

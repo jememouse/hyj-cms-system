@@ -162,10 +162,12 @@ class GoogleSheetClient:
         return wrapper
 
     @_retry_on_api_error
-    def fetch_records_by_status(self, status: str, category: str = None, limit: int = 50) -> List[Dict]:
+    def fetch_records_by_status(self, status: str, category: str = None, limit: int = 50, sort_by_time_col: str = None, reverse_batch: bool = False) -> List[Dict]:
         """
         获取指定状态的记录
         兼容 FeishuClient 接口
+        :param sort_by_time_col: 按指定的列名进行降序排列（提取最新时间的内容）。如："选题生成时间"或"生成时间"
+        :param reverse_batch: 若为 True，则把分出的批次反转（例如让最新内容的放在批次末尾发布，以确保处于 CMS 最顶部）
         """
         # 注意：此方法默认针对 CMS 主表
         sheet = self._get_sheet("cms")
@@ -173,28 +175,37 @@ class GoogleSheetClient:
         
         # 不要在这里 try-except 掩盖错误，交给装饰器处理
         all_records = sheet.get_all_records()
-        results = []
+        filtered_records = []
         
+        # 原逻辑：顺序遍历附加 Row ID 与过滤，保证能够回写数据到准确的横行
         for i, row in enumerate(all_records):
-            # 没有 record_id 列了，直接使用 row_index
             row_num = i + 2
             rec_id = f"row:{row_num}"
-            
-            # 注入临时 record_id 用于更新
             row["record_id"] = rec_id
             
-            # 筛选逻辑
             if str(row.get("Status")) == status:
                 if category:
                     if str(row.get("大项分类")) == category:
-                        results.append(row)
+                        filtered_records.append(row)
                 else:
-                    results.append(row)
+                    filtered_records.append(row)
                     
-            if len(results) >= limit:
-                break
-                
-        print(f"   📋 [GoogleSheet:cms] 获取 {len(results)} 条 {status} 记录")
+        # 若指定了排序列，按该列时间字符串降序（最新的在列表前面）
+        if sort_by_time_col:
+            # 兼容空字符串处理
+            def parse_time(r):
+                val = str(r.get(sort_by_time_col, "")).strip()
+                return val if val else ""
+            filtered_records.sort(key=parse_time, reverse=True)
+            
+        # 截取所需长度的批次
+        results = filtered_records[:limit]
+        
+        # 若需要批次倒置，反转数组使得最新的在最后执行
+        if reverse_batch:
+            results.reverse()
+            
+        print(f"   📋 [GoogleSheet:cms] 获取 {len(results)} 条 {status} 记录 (sort_col={sort_by_time_col}, reverse={reverse_batch})")
         return results
 
     @_retry_on_api_error
