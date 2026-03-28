@@ -61,10 +61,15 @@ class TrendSearchSkill(BaseSkill):
                         kw = str(r.get("Keyword", "")).strip()
                         if kw:
                             externals.append(f"[外部指定] {kw}")
-                            # 立即标记该单元格为 Used，完成滴灌闭环
+                            # 立即标记该单元格为 Used 并填入使用时间，完成滴灌闭环
                             rec_id = r.get("record_id")
                             if rec_id:
-                                client.update_record(rec_id, {"Status": "Used"}, table_id="keywords_lib")
+                                import time
+                                now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+                                client.update_record(rec_id, {
+                                    "Status": "Used",
+                                    "词条使用时间": now_str
+                                }, table_id="keywords_lib")
                     
                     if externals:
                         all_trends.extend(externals)
