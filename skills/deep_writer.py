@@ -30,6 +30,25 @@ class DeepWriteSkill(BaseSkill):
              with open(config.CONFIG_FILE, 'r', encoding='utf-8') as f:
                 self.brand_config = json.load(f)
 
+    def _get_dynamic_internal_links(self, count=2):
+        """
+        从 published_assets.json 中获取历史发布文章，供内链网络建设使用。
+        """
+        assets_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'published_assets.json')
+        if not os.path.exists(assets_file):
+            return []
+        try:
+            with open(assets_file, 'r', encoding='utf-8') as f:
+                assets = json.load(f)
+                if not assets:
+                    return []
+                # 随机抽取历史记录 (最多 count 条)
+                sample_count = min(count, len(assets))
+                return random.sample(assets, sample_count)
+        except Exception as e:
+            logger.error(f"[DeepWriter] 读取 published_assets.json 失败: {e}")
+            return []
+
     def execute(self, input_data: Dict) -> Dict:
         """
         Input: {"topic": str, "category": str, "rag_context": str (optional)}
@@ -48,11 +67,15 @@ class DeepWriteSkill(BaseSkill):
         # 2. GEO 策略选择 (根据分类调整权重)
         selected_city, geo_context, industry_focus = self._get_geo_strategy(category)
         
-        # 3. 构建分类特定的指令 (传入 topic 以便识别案例词)
+        # 3. 抓取真实发布的历史文章，构建动态内链池
+        dynamic_links = self._get_dynamic_internal_links(count=2)
+        
+        # 4. 构建分类特定的指令 (传入 topic 以便识别案例词)
         category_instruction = self._get_category_instruction(category, brand_name, topic)
         
-        # 4. 构建 Prompt
+        # 5. 构建 Prompt
         prompt = self._build_prompt(
+            dynamic_links=dynamic_links,
             topic=topic,
             category=category,
             category_id=category_id,
@@ -206,7 +229,7 @@ class DeepWriteSkill(BaseSkill):
             4. **唯一品牌露出**：仅在文章底部的【品牌签名】中出现。正文中不要强行蹭热点营销。
             """
 
-    def _build_prompt(self, topic, category, category_id, brand_name, selected_city, geo_context, industry_focus, rag_context, category_instruction, source_trend=""):
+    def _build_prompt(self, dynamic_links, topic, category, category_id, brand_name, selected_city, geo_context, industry_focus, rag_context, category_instruction, source_trend=""):
         # [Newsjacking] 如果存在热点词，注入强制关联指令
         newsjacking_instruction = ""
         if source_trend:
@@ -223,13 +246,15 @@ class DeepWriteSkill(BaseSkill):
         
         # 内链策略
         INTERNAL_LINKS = {
-            "专业知识": {"url": "/news/list-1.html", "anchor": "查看更多包装干货"},
-            "行业资讯": {"url": "/news/list-2.html", "anchor": "浏览行业最新动态"},
-            "产品介绍": {"url": "/news/list-3.html", "anchor": "探索热销包装产品"},
             "CTA": {"url": "https://heyijiapack.com/product", "anchor": "👉 立即获取报价"}
         }
-        category_link = INTERNAL_LINKS.get(category, INTERNAL_LINKS["行业资讯"])
         cta_link = INTERNAL_LINKS["CTA"]
+        
+        dynamic_links_str = ""
+        if dynamic_links:
+            dynamic_links_str = "\n".join([f"            - 历史文章 [{dl.get('title', '')}]: {dl.get('url', '')}" for dl in dynamic_links])
+        else:
+            dynamic_links_str = "            - (因系统刚部署暂无历史在线文章，可忽略此条内链要求)"
 
         # 品牌信息
         brand_info = {
@@ -303,10 +328,12 @@ class DeepWriteSkill(BaseSkill):
            - 格式: `<img src="https://image.pollinations.ai/prompt/{{english_keyword}}?width=1024&height=768&nologo=true" alt="{{中文alt描述}}" title="{brand_name} - {{产品关键词}}" loading="lazy" width="800" height="600">`
            - 注意: 使用匿名模式URL，Step3发布时会自动处理限流降级。
            - english_keyword: 英文短语。
-        4. **内链**:
-           - 插入 2-3 个内链：
-           - `<a href="{category_link['url']}">{category_link['anchor']}</a>`
-           - `<a href="{cta_link['url']}">{cta_link['anchor']}</a>`
+        4. **超级内链矩阵 (SEO Spider Web)**:
+           - 转化引导链接：`<a href="{cta_link['url']}">{cta_link['anchor']}</a>`
+           - **必须**将以下 {len(dynamic_links) if dynamic_links else 0} 个历史相关文章的 URL 作为超链接（`<a>`）自然地**缝合**进正文段落中。
+           - 待注入资源池：
+{dynamic_links_str}
+           - 锚文本(Anchor)需自然贴合语境，可直接使用标题。严禁全堆叠在底部。
         5. **标题 (Title Preservation)**:
            - **严禁改写**: 直接使用输入的 "{topic}" 作为 H1 标题。
            - **例外**: 只有当原标题包含明显错别字时才可微调。
