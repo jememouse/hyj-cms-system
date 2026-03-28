@@ -48,7 +48,7 @@ class TrendSearchSkill(BaseSkill):
             client = GoogleSheetClient()
             if client.client: # 确认连接成功
                 print("📦 正在连接 Google Sheets 读取 `keywords_lib` 蓄水池...")
-                pull_limit = 25
+                pull_limit = 30
                 
                 # 兼容两种状态：留空 ("") 或者填了 "Unused"
                 unused_records = client.fetch_records_by_status("", limit=pull_limit, table_id="keywords_lib")
