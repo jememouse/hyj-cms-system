@@ -153,7 +153,8 @@ class TopicAnalysisSkill(BaseSkill):
             # 3. 随机抽取补全
             needed = target_count - len(analyzed_trends)
             if candidates:
-                fillers = random.sample(candidates, min(needed, len(candidates)))
+                # 重点：不再随机取样，严格从排序好的最顶端按顺序取，以保证 external_candidates 被百分百提取
+                fillers = candidates[:needed]
                 for f in fillers:
                     analyzed_trends.append({
                         "topic": f,
@@ -162,6 +163,23 @@ class TopicAnalysisSkill(BaseSkill):
                     })
             print(f"✅ [Topics] 已补全至 {len(analyzed_trends)} 个")
             
+        # === 终极保险：强行还原 [外部指定] 标识符 ===
+        is_external = set()
+        for raw_t in trends:
+            if "[外部指定]" in raw_t:
+                ct = re.sub(r'\[.*?\]\s*', '', raw_t).strip()
+                is_external.add(ct)
+                
+        for t in analyzed_trends:
+            topic_str = t.get("topic", "")
+            ct = re.sub(r'\[.*?\]\s*', '', topic_str).strip()
+            # 前缀或部分匹配，找回外部词组
+            for ext in is_external:
+                if ext in topic_str or ct in ext:
+                    if "[外部指定]" not in topic_str:
+                        t["topic"] = f"[外部指定] {topic_str}"
+                    break
+        
         return analyzed_trends[:target_count]
 
     def _generate_titles(self, trend, brand_config):
