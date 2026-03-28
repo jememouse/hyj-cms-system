@@ -205,7 +205,7 @@ class GoogleSheetClient:
         if reverse_batch:
             results.reverse()
             
-        print(f"   📋 [GoogleSheet:cms] 获取 {len(results)} 条 {status} 记录 (sort_col={sort_by_time_col}, reverse={reverse_batch})")
+        print(f"   📋 [GoogleSheet:{sheet.title}] 获取 {len(results)} 条 '{status}' 记录 (sort_col={sort_by_time_col}, reverse={reverse_batch})")
         return results
 
     @_retry_on_api_error
