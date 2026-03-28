@@ -143,22 +143,20 @@ class WellCMSPublisher:
             try:
                 # 检查 #email 是否存在
                 if self.page.wait_for_selector('#email', state="visible", timeout=5000):
-                    print(f"      👀 [Step 1] 填写账号: {self.username}...")
+                    print("      👀 [Step 1] 填写账号密码...")
+                    # 用户提供的 Selector: #email, #password
                     self.page.fill('#email', self.username)
-                    time.sleep(0.3)
                     self.page.fill('#password', self.password)
-                    time.sleep(0.5)
                     
-                    print("      🖱️ [Step 1] 发起登录提交 (Press Enter)...")
-                    self.page.press('#password', 'Enter')
-                    
-                    print("      ⏳ [Step 1] 等待前台网络验证...")
-                    time.sleep(3)  # 给系统充足时间处理接口回调与JS重定向
-                    
-                    # 检查页面上是否有报错信息 (WellCMS 常用的 Bootstrap alert)
-                    error_msg = self.page.evaluate("() => { const el = document.querySelector('.alert'); return el ? el.innerText : ''; }")
-                    if error_msg and len(error_msg.strip()) > 0:
-                        print(f"      ❌ [Step 1] 页面抛出异常警告: {error_msg.strip()}")
+                    print("      🖱️ [Step 1] 点击登录并等待路由导航完成...")
+                    try:
+                        # 采用原子级的上下文绑定：预期会发生一次导航跳转
+                        # wait_until="domcontentloaded" 速度最快，只要 DOM 树出来就算成功，不管外链图片和统计代码死活
+                        with self.page.expect_navigation(timeout=15000, wait_until="domcontentloaded"):
+                            self.page.click('button.btn-primary#submit')
+                    except Exception as e:
+                        # 兼容处理：有可能刚点下去还没跳，就已经算是成功了 (SPA框架特性)
+                        print(f"      ℹ️ [Step 1] 导航监听结束或超时，继续向下校验状态: {e}")
                 else:
                     print("      ℹ️ [Step 1] 未检测到输入框，可能已登录")
             except Exception as e:
@@ -167,7 +165,7 @@ class WellCMSPublisher:
             # ==================================================================
             # Step 2: 后台二次验证
             # ==================================================================
-            time.sleep(1)
+            time.sleep(2)  # 等待登录跳转完成
             
             print(f"      📍 [Step 2] 强制访问后台: {self.admin_url}")
             self._safe_goto(self.admin_url)
@@ -175,10 +173,6 @@ class WellCMSPublisher:
             # 检查是否被踢回
             if "user-login" in self.page.url:
                  print(f"      ❌ [Step 2] 失败: 被重定向回前台登录页 ({self.page.url})")
-                 return False
-                 
-            if "admin" not in self.page.url:
-                 print(f"      ❌ [Step 2] 失败: 未能进入后台，账号可能无权限或跳回首页 ({self.page.url})")
                  return False
 
             try:
