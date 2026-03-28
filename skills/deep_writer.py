@@ -144,13 +144,13 @@ class DeepWriteSkill(BaseSkill):
                     "type": "B2C", 
                     "role": "淘宝店主/Etsy卖家/婚礼策划师", 
                     "pain": "订单少、起订量高、预算有限", 
-                    "gain": "1个起订、免费设计、销量翻倍"
+                    "gain": "1个起订、免费打样、销量爆发"
                 },
                 {
                     "type": "B2B", 
                     "role": "品牌采购经理/外贸公司", 
-                    "pain": "交期不稳定、色差严重、供应商配合度低", 
-                    "gain": "3天交付、ISO品控、供应链稳定"
+                    "pain": "交期不稳定、试错成本高、配合度低", 
+                    "gain": "最快1天交付、3秒报价、时差零容忍退款兜底"
                 }
             ]
             scenario = random.choice(scenarios)
@@ -167,8 +167,8 @@ class DeepWriteSkill(BaseSkill):
             2. **结构要求 (STAR原则改编)**：
                - **背景 (Situation)**：客户的真实商业痛点（如：转化率低、复购率低、包材破损率高）。
                - **诊断 (Diagnosis)**：以专家视角分析为什么会出现这个问题（如：包装设计缺乏记忆点、材质选择错误）。
-               - **方案 (Solution)**：盒艺家提供了什么具体的解决方案（1个起订测试、结构优化、视觉升级）。
-               - **结果 (Result)**：用数据说话（销量增长30%、破损率降至0、客户好评率提升）。
+               - **打消顾虑方案 (Solution)**：盒艺家提供了什么具体的解决方案。在描述方案时，必须不遗余力地展现我们的 5 大核心杀手锏：**“3秒智能报价 · 1个起订 · 最快1天交付 · 免费打样 · 时效及质量问题无条件退款”**。从供应链源头上给客户碾压级的安全感。
+               - **结果 (Result)**：用数据说话（无理由退款机制让决策速度翻倍、1天光速出货挽救危局、好评率飙升）。
             3. **克制营销**：品牌植入必须服务于“解决问题”，不要生硬吹嘘。
             4. **B2B/B2C 侧重**：
                - 如果是 B2C (店主)：侧重“低成本试错”、“视觉营销价值”。
@@ -191,7 +191,7 @@ class DeepWriteSkill(BaseSkill):
             【当前模式：产品导购 (Product Showcase)】
             🔥 **核心原则**：
             1. **价值导向**：80% 篇幅讲“用户痛点+解决方案”，20% 篇幅讲“{brand_name}如何实现该方案”。
-            2. **卖点聚焦**：重点突出 "1个起订"、"3秒报价"、"免费设计"。
+            2. **硬核大招**：必须在阐述解决方案时，高频且自然地植入官方的 5 大杀手锏卖点：**“3秒智能报价 · 1个起订 · 最快1天交付 · 免费打样 · 时效及质量问题无条件退款”**，以此构建不可逾越的护城河，从而彻底打消买家的顾虑。
             3. **场景感**：必须描述具体的使用场景（如：淘宝店主刚创业、企业年会急需礼盒）。
             4. **克制营销**：避免通篇“买我买我”，而是用“聪明的店主都选这种...”来引导。
             """
@@ -234,8 +234,9 @@ class DeepWriteSkill(BaseSkill):
         # 品牌信息
         brand_info = {
             "slogan": "盒艺家，让每个好产品都有好包装",
+            "usp": "3秒智能报价 · 1个起订 · 最快1天交付 · 免费打样 · 时效及质量问题无条件退款",
             "phone": "177-2795-6114",
-            "contact_cta": "免费获取报价"
+            "contact_cta": "免费获取智能报价"
         }
 
         # GEO 强制注入逻辑：保留原本的基础地域植入（ Local SEO ），但密度要求放宽
@@ -285,10 +286,12 @@ class DeepWriteSkill(BaseSkill):
            - **首段直出答案**: (模拟百度百科/精选摘要)。
            - 目录(TOC) -> 核心内容 -> 总结 -> FAQ -> 品牌签名。
            - 标题层级: H1(仅1个) -> H2 -> H3。H2/H3 必须带 id。
-           - **品牌签名** (简洁版):
+           - **品牌签名** (销售增强版):
              ```html
-             <div class="brand-signature">
-               <p><strong>{brand_info['slogan']}</strong> | 📞 {brand_info['phone']} | <a href="https://heyijiapack.com/product">{brand_info['contact_cta']}</a></p>
+             <div class="brand-signature" style="margin-top:30px; padding:20px; background-color:#fef9f5; border-left:4px solid #ff6600; border-radius:4px;">
+               <p style="font-size:16px; margin-bottom:8px;"><strong>{brand_info['slogan']}</strong></p>
+               <p style="color:#e65100; font-weight:bold; margin-bottom:12px;">🔥 核心承诺：{brand_info['usp']}</p>
+               <p style="font-size:14px;">📞 VIP通道：{brand_info['phone']} | <a href="https://heyijiapack.com/product" style="color:#1a73e8; text-decoration:none;">{brand_info['contact_cta']} ➔</a></p>
              </div>
              ```
         2. **GEO优化**: 
