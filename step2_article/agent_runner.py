@@ -18,31 +18,31 @@ def run():
     client = GoogleSheetClient()
     
     # Load Topics (From Feishu for Persistence)
-    print("☁️ 正在从飞书拉取 Ready 状态的选题...")
+    print("☁️ 正在从 Google Sheets 拉取待生成的选题...")
     
-    # Fetch Ready topics from Feishu
-    # Use pagination loop if needed, but for now we fetch up to MAX_GENERATE_PER_CATEGORY * 3 to be safe
-    # We fetch by status 'Ready'
+    # 拉取 Priority 状态的特权选题
+    priority_topics = client.fetch_records_by_status(config.STATUS_PRIORITY, limit=100, sort_by_time_col="选题生成时间", reverse_batch=False)
     
-    pending_topics = client.fetch_records_by_status(config.STATUS_READY, limit=500, sort_by_time_col="选题生成时间", reverse_batch=False)
+    # 拉取 Ready 状态的常规选题
+    ready_topics = client.fetch_records_by_status(config.STATUS_READY, limit=500, sort_by_time_col="选题生成时间", reverse_batch=False)
+    
+    pending_topics = priority_topics + ready_topics
     
     if not pending_topics:
-        print("❌ 飞书中没有找到 Ready 状态的选题，请先运行 Step 1")
+        print("❌ 表格中没有找到 Priority 或 Ready 状态的选题，请先运行 Step 1")
         return
 
-    print(f"📋 从飞书获取到 {len(pending_topics)} 个 Ready 选题")
+    print(f"📋 从表格获取到 {len(priority_topics)} 个特权选题及 {len(ready_topics)} 个常规选题")
     
     # Load Config Limit
     max_limit = config.MAX_GENERATE_PER_CATEGORY
-    print(f"⚙️  每分类处理上限: {max_limit}")
+    print(f"⚙️  常规分类处理上限: {max_limit}")
 
-    # 3. 分组与 Round-Robin 排序
+    # 3. 分组与 Round-Robin 排序 (仅针对常规 Ready 选题)
     # Group by Category
     from collections import defaultdict
     grouped_topics = defaultdict(list)
-    for t in pending_topics:
-        # Note: GoogleSheetClient returns dict with keys matching headers: 'Topic', '大项分类'
-        # No need to map from lowercase 'topic'
+    for t in ready_topics:
         
         # Ensure keys exist
         if 'Topic' not in t:
@@ -54,12 +54,18 @@ def run():
         cat = t.get('大项分类', '未分类')
         grouped_topics[cat].append(t)
     
-    print("📊 待处理选题分布:")
+    print("📊 常规待处理选题分布:")
     for cat, items in grouped_topics.items():
         print(f"   - {cat}: {len(items)} 条")
         
-    # Round-Robin Merge
+    # 构建最终待执行的 sorted_topics
     sorted_topics = []
+    
+    # (1) Priority 选题直接插队 (不经过 Round-Robin)
+    for t in priority_topics:
+        sorted_topics.append(t)
+        
+    # (2) 常规选题进行 Round-Robin Merge
     from itertools import zip_longest
     # 取每个分类的前 max_limit 条
     lists = [items[:max_limit] for items in grouped_topics.values()]
@@ -69,7 +75,7 @@ def run():
             if item is not None:
                 sorted_topics.append(item)
                 
-    print(f"🔄 均衡排序后共 {len(sorted_topics)} 条任务")
+    print(f"🔄 排序(头部特权排队+普通均衡)后共 {len(sorted_topics)} 条任务")
     
     import random
     from datetime import datetime

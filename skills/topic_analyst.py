@@ -101,6 +101,8 @@ class TopicAnalysisSkill(BaseSkill):
         请从以下全网热点中，**务必挑选出 {target_count} 个** 最适合写文章的话题。
 
         筛选优先级（兼顾 B2B 与 B2C）：
+        0. **VIP级（无条件通过 - 平台外部词汇绿通道）**：
+           - **只要话题中带有 `[外部指定]` 标签**，代表它是人工高优导入的 5118 等词条库，这类词汇享有绝对优先权（免审），**请你务必将其全部抽出，并强制标注为 "S" 级优先级！绝对不要漏掉任何一个带此标签的话题。**
         1. **S级（必选 - 借势营销/高意图）**：
            - **社会热点强关联 (Newsjacking)**：能通过"隐喻/场景/配色"强行关联的破圈热点。
              - *思维模型*：哈尔滨火了 -> 思考"抗寒/冷链包装"；繁花热播 -> 思考"复古/港风礼盒"；多巴胺穿搭 -> 思考"鲜艳配色包装"。
@@ -133,13 +135,20 @@ class TopicAnalysisSkill(BaseSkill):
             # 1. 提取已有的 topics 以避免重复
             existing_topics = {t.get("topic", "") for t in analyzed_trends}
             
-            # 2. 从原始列表中寻找候选
+            # 2. 从原始列表中寻找候选，[外部指定] 具有强插队特权
             candidates = []
+            external_candidates = []
             for raw_t in trends:
-                # 简单清理：去除 "[平台]" 前缀
                 clean_t = re.sub(r'\[.*?\]\s*', '', raw_t)
+                # 保留 [外部指定] 特权标识，但对于去重比对，需要使用它清洗后的核心词
                 if clean_t and clean_t not in existing_topics:
-                    candidates.append(clean_t)
+                    if "[外部指定]" in raw_t:
+                        external_candidates.append(clean_t)
+                    else:
+                        candidates.append(clean_t)
+            
+            # 把外部特供词放到最优先补充位置
+            candidates = external_candidates + candidates
             
             # 3. 随机抽取补全
             needed = target_count - len(analyzed_trends)

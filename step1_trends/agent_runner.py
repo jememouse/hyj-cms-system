@@ -25,9 +25,13 @@ def run():
     topics = hunter.hunt_and_analyze(args)
     
     if topics:
-        # 根据项目要求，将所有挖掘到的主题状态统一设置为 "Ready"
+        from shared import config
+        # 根据产生结果来源判断状态，外部导入词汇赋予最高插队权 Priority
         for t in topics:
-            t['Status'] = 'Ready'
+            if '[外部指定]' in t.get('Source_Trend', ''):
+                t['Status'] = config.STATUS_PRIORITY
+            else:
+                t['Status'] = config.STATUS_READY
         # Save results
         # Save results (Append Mode)
         existing_data = []
@@ -79,7 +83,7 @@ def run():
                         record = {
                             "Topic": t['Topic'],
                             "大项分类": t['大项分类'],
-                            "Status": config.STATUS_READY,
+                            "Status": t['Status'], # 原为 config.STATUS_READY，现改为动态传递 Priority 或 Ready
                             "Source_Trend": t.get('Source_Trend', ''),
                             "选题生成时间": t.get('created_at') or now_str # Handle empty string or missing key
                         }
