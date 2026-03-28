@@ -162,15 +162,15 @@ class GoogleSheetClient:
         return wrapper
 
     @_retry_on_api_error
-    def fetch_records_by_status(self, status: str, category: str = None, limit: int = 50, sort_by_time_col: str = None, reverse_batch: bool = False) -> List[Dict]:
+    def fetch_records_by_status(self, status: str, category: str = None, limit: int = 50, sort_by_time_col: str = None, reverse_batch: bool = False, table_id: str = "cms") -> List[Dict]:
         """
         获取指定状态的记录
         兼容 FeishuClient 接口
         :param sort_by_time_col: 按指定的列名进行降序排列（提取最新时间的内容）。如："选题生成时间"或"生成时间"
         :param reverse_batch: 若为 True，则把分出的批次反转（例如让最新内容的放在批次末尾发布，以确保处于 CMS 最顶部）
+        :param table_id: 目标工作表名称，默认为 'cms'
         """
-        # 注意：此方法默认针对 CMS 主表
-        sheet = self._get_sheet("cms")
+        sheet = self._get_sheet(table_id)
         if not sheet: return []
         
         # 不要在这里 try-except 掩盖错误，交给装饰器处理
@@ -209,12 +209,11 @@ class GoogleSheetClient:
         return results
 
     @_retry_on_api_error
-    def update_record(self, record_id: str, fields: Dict, retry: bool = True) -> bool:
+    def update_record(self, record_id: str, fields: Dict, retry: bool = True, table_id: str = "cms") -> bool:
         """
-        更新记录 (默认 cms 表)
+        更新记录
         """
-        # 简单处理：目前业务只更新 CMS 表的状态
-        sheet = self._get_sheet("cms")
+        sheet = self._get_sheet(table_id)
         if not sheet: return False
         
         row_num = -1

@@ -42,30 +42,39 @@ class TrendSearchSkill(BaseSkill):
 
         print("📡 [TrendSearch] 开始多源数据抓取...")
         
-        # ===== 0. 提取本地外部优先级词条 (如 5118 导出) =====
-        external_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "external_keywords.txt")
-        if os.path.exists(external_file):
-            print(f"📦 发现外部优先词库文件: {external_file}")
-            try:
-                with open(external_file, 'r', encoding='utf-8') as f:
-                    lines = f.readlines()
+        # ===== 0. 提取云端(Google Sheets: keywords_lib)的优先级词条 (如 5118 导出) =====
+        try:
+            from shared.google_client import GoogleSheetClient
+            client = GoogleSheetClient()
+            if client.client: # 确认连接成功
+                print("📦 正在连接 Google Sheets 读取 `keywords_lib` 蓄水池...")
+                pull_limit = 10
+                
+                # 兼容两种状态：留空 ("") 或者填了 "Unused"
+                unused_records = client.fetch_records_by_status("", limit=pull_limit, table_id="keywords_lib")
+                if len(unused_records) < pull_limit:
+                    unused_records.extend(client.fetch_records_by_status("Unused", limit=pull_limit - len(unused_records), table_id="keywords_lib"))
+                    
                 externals = []
-                for line in lines:
-                    kw = line.strip()
-                    if kw:
-                        # 使用[外部指定]标签，以便后续TopicAnalysisSkill与agent_runner识别
-                        externals.append(f"[外部指定] {kw}")
-                
-                if externals:
-                    all_trends.extend(externals)
-                    print(f"✅ 成功导入 {len(externals)} 个外部高优词条")
-                
-                # 重命名以防止下次继续重复读取
-                done_file = external_file + f".done.{int(time.time())}"
-                os.rename(external_file, done_file)
-                print(f"🔄 已将词库文件停用并重命名为: {os.path.basename(done_file)}")
-            except Exception as e:
-                print(f"❌ 读取外部词库文件失败: {e}")
+                if unused_records:
+                    for r in unused_records:
+                        kw = str(r.get("Keyword", "")).strip()
+                        if kw:
+                            externals.append(f"[外部指定] {kw}")
+                            # 立即标记该单元格为 Used，完成滴灌闭环
+                            rec_id = r.get("record_id")
+                            if rec_id:
+                                client.update_record(rec_id, {"Status": "Used"}, table_id="keywords_lib")
+                    
+                    if externals:
+                        all_trends.extend(externals)
+                        print(f"✅ 成功从云端蓄水池滴灌了 {len(externals)} 个高优词条到本批次")
+                else:
+                    print("ℹ️ 蓄水池 (keywords_lib) 中目前没有待处理的 Unused 词条。")
+        except Exception as e:
+            import traceback
+            print(f"❌ 读取云端词库表异常: {e}")
+            traceback.print_exc()
 
         # ===== 1. 种子词轮换策略 (保持话题多样性) =====
         if mining_seeds:
