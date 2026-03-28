@@ -11,6 +11,7 @@ __pycache__/
 .DS_Store
 
 # Project Data (Temporary Cache and Logs)
+*.done.*
 trends_data.json
 generated_seo_data.json
 generated_seo_data.json.bak
