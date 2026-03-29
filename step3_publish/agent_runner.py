@@ -81,7 +81,12 @@ def run():
     num_accounts = len(active_accounts) if active_accounts else 1
     print(f"⚙️  [Target Mode] 账号数: {num_accounts} | 本次锁定发布: {limit} 篇")
     
-    pending_records = client.fetch_records_by_status(status=config.STATUS_PENDING, limit=limit)
+    pending_records = client.fetch_records_by_status(
+        status=config.STATUS_PENDING, 
+        limit=limit,
+        sort_by_time_col="生成时间",
+        reverse_batch=True
+    )
     
     print(f"📋 发现 {len(pending_records)} 篇待发布文章")
     
