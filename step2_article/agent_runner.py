@@ -104,15 +104,32 @@ def run():
                 print(f"   🛑 跳过保存，保持 Ready 状态等待重试")
                 continue
                 
+            # 判断是否为最高优先级文章
+            is_priority = (item.get('Status') == config.STATUS_PRIORITY)
+            target_status = config.STATUS_TOP_PRIORITY_PENDING if is_priority else config.STATUS_PENDING
+            
+            # 追加专用标签
+            final_tags = article.get('tags')
+            if is_priority:
+                priority_tag = "Top priority"
+                if not final_tags:
+                    final_tags = priority_tag
+                elif isinstance(final_tags, list):
+                    if priority_tag not in final_tags:
+                        final_tags.insert(0, priority_tag)
+                else:
+                    if priority_tag not in str(final_tags):
+                        final_tags = f"{priority_tag}, {final_tags}"
+
             # Fields to update
             fields = {
                 "Title": title,
                 "HTML_Content": content,
-                "Status": config.STATUS_PENDING,
+                "Status": target_status,
                 "关键词": article.get('keywords'),
                 "摘要": article.get('summary'),
                 "描述": article.get('description'),
-                "Tags": article.get('tags'),
+                "Tags": final_tags,
                 "生成时间": current_time,
                 # [Fix Zombie State] 重生成时必须清除旧的发布信息
                 "URL": "",

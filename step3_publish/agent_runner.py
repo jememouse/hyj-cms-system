@@ -81,14 +81,32 @@ def run():
     num_accounts = len(active_accounts) if active_accounts else 1
     print(f"⚙️  [Target Mode] 账号数: {num_accounts} | 本次锁定发布: {limit} 篇")
     
-    pending_records = client.fetch_records_by_status(
-        status=config.STATUS_PENDING, 
+    # 1. 优先拉取最高优先级队列 (Top_priority)
+    print("   👉 [Priority Queue] 检查置顶特权文章...")
+    priority_records = client.fetch_records_by_status(
+        status=config.STATUS_TOP_PRIORITY_PENDING, 
         limit=limit,
         sort_by_time_col="生成时间",
         reverse_batch=True
     )
     
-    print(f"📋 发现 {len(pending_records)} 篇待发布文章")
+    # 2. 如果配额没满，继续拉取常态队列 (Pending)
+    remaining_limit = limit - len(priority_records)
+    standard_records = []
+    
+    if remaining_limit > 0:
+        print(f"   👉 [Standard Queue] 检查常规待发布文章 (剩余配额: {remaining_limit})...")
+        standard_records = client.fetch_records_by_status(
+            status=config.STATUS_PENDING, 
+            limit=remaining_limit,
+            sort_by_time_col="生成时间",
+            reverse_batch=True
+        )
+        
+    # 合并队列 ( Priority 保证排在最前面 )
+    pending_records = priority_records + standard_records
+    
+    print(f"📋 发现分配总数 {len(pending_records)} 篇待发布文章 (特权: {len(priority_records)}, 常规: {len(standard_records)})")
     
     
     for idx, record in enumerate(pending_records):
@@ -226,10 +244,10 @@ def run():
         print(f"📢 已发送飞书通知 (成功: {total_success}, 失败: {total_fail})")
     else:
         # Debug Mode: Notify even if empty to confirm scheduling
-        print(f"⚠️ 本次未找到待发布文章 (Status=Pending)")
+        print(f"⚠️ 本次未找到待发布文章 (Status=Pending 或 Top priority)")
         client.send_notification(
             title="⚠️ CMS 发布轮空",
-            content=f"本次运行未找到 'Pending' 状态的文章。\n⏰ 时间: {time.strftime('%Y-%m-%d %H:%M')}\n请检查 Step 1/2 是否生成了足够内容。"
+            content=f"本次运行未找到 'Pending' 或 'Top priority' 状态的文章。\n⏰ 时间: {time.strftime('%Y-%m-%d %H:%M')}\n请检查 Step 1/2 是否生成了足够内容。"
         )
 
 def _record_to_assets(article, url):

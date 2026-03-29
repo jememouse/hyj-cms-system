@@ -128,6 +128,7 @@ CATEGORY_MAP = {
 STATUS_PRIORITY = "Priority"   # 特权插队: 用于人工指定的外部词条
 STATUS_READY = "Ready"         # 节点1完成: 标题已生成，等待文章生成
 STATUS_PENDING = "Pending"     # 节点2完成: 文章已生成，等待发布
+STATUS_TOP_PRIORITY_PENDING = "Top priority" # 节点2完成: Priority文章已生成，最高优先级等待发布
 STATUS_PUBLISHED = "Published" # 节点3完成: 已发布
 # STATUS_GENERATED 已废弃，合并入 STATUS_PENDING
 
