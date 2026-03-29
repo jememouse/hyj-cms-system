@@ -1,4 +1,4 @@
-# Deepseek-Feisu 自动化部署指南
+# Deepseek-gs 自动化部署指南
 
 本项目已支持 Docker 容器化部署，可独立运行于任何支持 Docker 的服务器或 VPS 上。
 
