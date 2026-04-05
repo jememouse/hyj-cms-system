@@ -132,80 +132,87 @@ def call_llm_with_retry(
     retry_delay: float = 1.0
 ) -> str:
     """
-    带重试机制的 LLM 调用
+    带重试 + 自动回退的 LLM 调用
+
+    调用策略:
+      1. 主通道 (DeepSeek 官方) 重试 max_retries 次
+      2. 若主通道全部失败且配置了备用 Key，切换到备用通道 (OpenRouter) 再重试一轮
 
     Args:
         prompt: 用户提示词
         system_prompt: 系统提示词
         model: 模型名称 (默认使用 config.LLM_MODEL)
         temperature: 温度参数
-        max_retries: 最大重试次数
+        max_retries: 每个通道的最大重试次数
         retry_delay: 重试延迟（秒）
 
     Returns:
         LLM 响应内容
     """
-    api_key = config.LLM_API_KEY
-    api_url = config.LLM_API_URL
-    model = model or config.LLM_MODEL
-
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-
-    # 针对 OpenRouter/DeepSeek 的特殊头
-    if "openrouter" in api_url or "deepseek" in api_url:
-        headers["HTTP-Referer"] = "https://github.com/jememouse/deepseek-feisu-cms"
-        headers["X-Title"] = "DeepSeek CMS Agent"
-
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": 8192
-    }
+    def _build_headers(api_key: str, api_url: str) -> dict:
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        if "deepseek" in api_url or "openrouter" in api_url:
+            headers["HTTP-Referer"] = "https://github.com/jememouse/deepseek-feisu-cms"
+            headers["X-Title"] = "DeepSeek CMS Agent"
+        return headers
 
-    for attempt in range(max_retries + 1):
-        try:
-            resp = requests.post(api_url, headers=headers, json=payload, timeout=90)
+    def _try_channel(api_key: str, api_url: str, api_model: str, channel_name: str) -> Optional[str]:
+        """尝试在单个通道上完成请求，成功返回内容，失败返回 None"""
+        headers = _build_headers(api_key, api_url)
+        payload = {
+            "model": api_model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": 8192
+        }
 
-            if resp.status_code == 200:
-                data = resp.json()
-                if 'choices' in data:
-                    return data['choices'][0]['message']['content']
+        for attempt in range(max_retries + 1):
+            try:
+                resp = requests.post(api_url, headers=headers, json=payload, timeout=90)
+
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if 'choices' in data:
+                        return data['choices'][0]['message']['content']
+                    else:
+                        print(f"   ⚠️ [{channel_name}] 响应格式异常: {data}")
                 else:
-                    print(f"   ⚠️ LLM 响应格式异常: {data}")
-                    if attempt < max_retries:
-                        time.sleep(retry_delay * (attempt + 1))
-                        continue
-                    return ""
-            else:
-                print(f"   ⚠️ LLM 错误 [{resp.status_code}]: {resp.text[:200]}")
-                if attempt < max_retries:
-                    time.sleep(retry_delay * (attempt + 1))
-                    continue
-                return ""
+                    print(f"   ⚠️ [{channel_name}] 错误 [{resp.status_code}]: {resp.text[:200]}")
 
-        except requests.exceptions.Timeout:
-            print(f"   ⚠️ LLM 请求超时 (尝试 {attempt + 1}/{max_retries + 1})")
+            except requests.exceptions.Timeout:
+                print(f"   ⚠️ [{channel_name}] 请求超时 (尝试 {attempt + 1}/{max_retries + 1})")
+
+            except Exception as e:
+                print(f"   ❌ [{channel_name}] 请求异常: {e}")
+
             if attempt < max_retries:
                 time.sleep(retry_delay * (attempt + 1))
-                continue
-            return ""
 
-        except Exception as e:
-            print(f"   ❌ LLM 请求异常: {e}")
-            if attempt < max_retries:
-                time.sleep(retry_delay * (attempt + 1))
-                continue
-            return ""
+        return None  # 该通道所有重试均失败
 
+    # ── 主通道: DeepSeek 官方 ──
+    primary_model = model or config.LLM_MODEL
+    result = _try_channel(config.LLM_API_KEY, config.LLM_API_URL, primary_model, "DeepSeek官方")
+    if result:
+        return result
+
+    # ── 备用通道: OpenRouter 兜底 ──
+    if config.FALLBACK_API_KEY:
+        print("   🔄 主通道失败，切换到 OpenRouter 备用通道...")
+        fallback_model = config.FALLBACK_MODEL
+        result = _try_channel(config.FALLBACK_API_KEY, config.FALLBACK_API_URL, fallback_model, "OpenRouter备用")
+        if result:
+            return result
+
+    print("   ❌ 所有通道均已失败")
     return ""
 
 

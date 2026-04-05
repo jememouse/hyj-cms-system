@@ -4,9 +4,6 @@ __pycache__/
 .venv/
 *.egg-info/
 
-# Environment Variables
-.env
-
 # System
 .DS_Store
 
@@ -17,9 +14,6 @@ generated_seo_data.json
 generated_seo_data.json.bak
 n8n_data/
 .cache/
-
-# Credentials (CRITICAL: NEVER TRACK IN GIT)
-service_account.json
 
 # IDE & AI Assistants / Local Workspace
 .idea/

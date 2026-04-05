@@ -10,20 +10,19 @@ load_dotenv()
 # 项目根目录
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# LLM API 配置 (支持 OpenRouter 和 DeepSeek)
-# 优先使用 OpenRouter，如果没有配置则回退到 DeepSeek
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+# LLM API 配置 (DeepSeek 官方优先，OpenRouter 兜底)
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
-# 根据可用的 API Key 选择端点
-if OPENROUTER_API_KEY:
-    LLM_API_KEY = OPENROUTER_API_KEY
-    LLM_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-    LLM_MODEL = "deepseek/deepseek-chat"  # DeepSeek V3 - JSON 格式更稳定
-else:
-    LLM_API_KEY = DEEPSEEK_API_KEY
-    LLM_API_URL = "https://api.deepseek.com/v1/chat/completions"
-    LLM_MODEL = "deepseek-chat"  # DeepSeek 原生模型名称
+# 主通道: DeepSeek 官方直连
+LLM_API_KEY = DEEPSEEK_API_KEY
+LLM_API_URL = "https://api.deepseek.com/v1/chat/completions"
+LLM_MODEL = "deepseek-chat"
+
+# 备用通道: OpenRouter (当主通道重试耗尽后自动切换)
+FALLBACK_API_KEY = OPENROUTER_API_KEY
+FALLBACK_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+FALLBACK_MODEL = "deepseek/deepseek-chat"
 
 # 飞书配置
 FEISHU_APP_ID = os.getenv("FEISHU_APP_ID", "")
