@@ -131,8 +131,9 @@ class GoogleSheetClient:
         
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            max_retries = 5
-            base_delay = 2
+            max_retries = 8
+            base_delay = 5
+            max_delay = 60
             
             for attempt in range(max_retries):
                 try:
@@ -145,18 +146,18 @@ class GoogleSheetClient:
                     is_retryable = False
                     if "500" in error_str or "502" in error_str or "503" in error_str:
                         is_retryable = True
-                    elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+                    elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str or "Quota exceeded" in error_str:
                         is_retryable = True
                     elif "104" in error_str or "Connection reset" in error_str: # Connection errors
                         is_retryable = True
                         
                     if is_retryable:
                         if attempt < max_retries - 1:
-                            sleep_time = base_delay * (2 ** attempt) # 指数退避: 2, 4, 8, 16...
-                            print(f"   ⚠️ Google API 临时错误 ({e})，将在 {sleep_time}秒 后重试 ({attempt + 1}/{max_retries})...")
+                            sleep_time = min(base_delay * (2 ** attempt), max_delay) # 指数退避，带上限
+                            print(f"   ⚠️ Google API 临时错误，将在 {sleep_time}秒 后重试 ({attempt + 1}/{max_retries})...")
                             time.sleep(sleep_time)
                             
-                            # 如果是 429/Auth 错误，尝试重新连接一次
+                            # 如果是 Auth 错误，尝试重新连接一次
                             if "401" in error_str or "invalid_grant" in error_str:
                                 print("      🔄 尝试刷新认证...")
                                 self._connect()
