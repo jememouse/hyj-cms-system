@@ -6,7 +6,8 @@ __pycache__/
 
 # Credentials (通过 GitHub Secrets 注入 CI)
 service_account.json
-
+.env
+.env.*
 # System
 .DS_Store
 
