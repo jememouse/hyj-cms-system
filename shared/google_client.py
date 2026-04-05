@@ -270,44 +270,42 @@ class GoogleSheetClient:
         
         return True
 
+    @_retry_on_api_error
     def create_record(self, fields: Dict, table_id: str = None) -> Optional[str]:
         """创建记录 (支持指定 table_id/worksheet)"""
         sheet = self._get_sheet(table_id)
         if not sheet: return None
         
-        try:
-            # 移除 record_id 生成逻辑 (用户不需要)
-            now_str = time.strftime("%Y-%m-%d %H:%M:%S")
-            fields["created_at"] = now_str
+        # 不使用 try-except 掩盖异常，交给装饰器处理重试
+        # 移除 record_id 生成逻辑 (用户不需要)
+        now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+        fields["created_at"] = now_str
+        
+        # 自动填充 "生成时间" (System Created Time)
+        if "生成时间" not in fields:
+            fields["生成时间"] = now_str
+        
+        # 对齐表头
+        headers = sheet.row_values(1)
+        row_data = []
+        
+        for h in headers:
+            val = fields.get(h, "")
+            if isinstance(val, (list, dict)):
+                val = json.dumps(val, ensure_ascii=False)
+            row_data.append(val)
             
-            # 自动填充 "生成时间" (System Created Time)
-            if "生成时间" not in fields:
-                fields["生成时间"] = now_str
-            
-            # 对齐表头
-            headers = sheet.row_values(1)
-            row_data = []
-            
-            for h in headers:
-                val = fields.get(h, "")
-                if isinstance(val, (list, dict)):
-                    val = json.dumps(val, ensure_ascii=False)
-                row_data.append(val)
-                
-            sheet.append_row(row_data)
-            return "row:new" # 无法立即知道 row number，除非再查一次
-            
-        except Exception as e:
-            print(f"❌ 创建失败: {e}")
-            return None
+        sheet.append_row(row_data)
+        return "row:new" # 无法立即知道 row number，除非再查一次
 
+    @_retry_on_api_error
     def batch_create_records(self, records: List[Dict], table_id: str = None) -> bool:
         """批量创建"""
         sheet = self._get_sheet(table_id)
         if not sheet or not records: return False
         
-        try:
-            headers = sheet.row_values(1)
+        # 不使用 try-except 掩盖异常，交给装饰器处理重试
+        headers = sheet.row_values(1)
             rows_to_append = []
             
             for r in records:
@@ -326,10 +324,6 @@ class GoogleSheetClient:
             sheet.append_rows(rows_to_append)
             print(f"   ✅ Google Sheet [{sheet.title}]: 批量插入 {len(rows_to_append)} 条")
             return True
-            
-        except Exception as e:
-            print(f"❌ 批量创建失败: {e}")
-            return False
 
     def send_notification(self, title: str, content: str) -> bool:
         """
