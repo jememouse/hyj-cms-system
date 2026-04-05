@@ -14,6 +14,12 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 
+# 免费前置通道: OpenRouter 免费模型 (优先使用)
+OPENROUTER_FREE_MODEL = os.getenv("OPENROUTER_FREE_MODEL", "qwen/qwen3.6-plus:free").strip()
+FREE_API_KEY = OPENROUTER_API_KEY
+FREE_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+FREE_MODEL = OPENROUTER_FREE_MODEL
+
 # 主通道: DeepSeek 官方直连
 LLM_API_KEY = DEEPSEEK_API_KEY
 LLM_API_URL = "https://api.deepseek.com/v1/chat/completions"

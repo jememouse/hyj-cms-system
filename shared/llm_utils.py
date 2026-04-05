@@ -198,6 +198,15 @@ def call_llm_with_retry(
 
         return None  # 该通道所有重试均失败
 
+    # ── 免费前置通道: OpenRouter 免费模型 ──
+    if config.FREE_API_KEY and config.FREE_MODEL:
+        print(f"   🆓 尝试使用 OpenRouter 前置免费通道 ({config.FREE_MODEL})...")
+        # 免费通道建议缩短重试次数或使用默认 max_retries
+        result = _try_channel(config.FREE_API_KEY, config.FREE_API_URL, config.FREE_MODEL, "OpenRouter免费")
+        if result:
+            return result
+        print("   ⚠️ 免费前置通道失败，即将降级到原有主通道策略...")
+
     # ── 主通道: DeepSeek 官方 ──
     primary_model = model or config.LLM_MODEL
     result = _try_channel(config.LLM_API_KEY, config.LLM_API_URL, primary_model, "DeepSeek官方")
