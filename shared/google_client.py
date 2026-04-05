@@ -14,9 +14,19 @@ from typing import List, Dict, Optional, Any
 from . import config
 
 class GoogleSheetClient:
-    """Google Sheets 客户端"""
+    """Google Sheets 客户端 (单例模式)"""
+    _instance = None
+    _initialized = False
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(GoogleSheetClient, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
     
     def __init__(self):
+        if self._initialized:
+            return
+            
         self.scope = [
             'https://spreadsheets.google.com/feeds',
             'https://www.googleapis.com/auth/drive'
@@ -27,8 +37,9 @@ class GoogleSheetClient:
         self.client = None
         self.spreadsheet = None
         
-        # 总是尝试连接（_connect 内部会优先检查环境变量，再检查文件）
+        # 总是尝试连接
         self._connect()
+        self.__class__._initialized = True
 
     def _connect(self):
         """连接到 Google Spreadsheet"""
