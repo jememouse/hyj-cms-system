@@ -304,26 +304,25 @@ class GoogleSheetClient:
         sheet = self._get_sheet(table_id)
         if not sheet or not records: return False
         
-        # 不使用 try-except 掩盖异常，交给装饰器处理重试
         headers = sheet.row_values(1)
-            rows_to_append = []
+        rows_to_append = []
+        
+        for r in records:
+            # 生成 ID
+            if "record_id" not in r:
+                r["record_id"] = str(uuid.uuid4())
             
-            for r in records:
-                # 生成 ID
-                if "record_id" not in r:
-                    r["record_id"] = str(uuid.uuid4())
-                
-                row_data = []
-                for h in headers:
-                    val = r.get(h, "")
-                    if isinstance(val, (list, dict)):
-                        val = json.dumps(val, ensure_ascii=False)
-                    row_data.append(val)
-                rows_to_append.append(row_data)
-                
-            sheet.append_rows(rows_to_append)
-            print(f"   ✅ Google Sheet [{sheet.title}]: 批量插入 {len(rows_to_append)} 条")
-            return True
+            row_data = []
+            for h in headers:
+                val = r.get(h, "")
+                if isinstance(val, (list, dict)):
+                    val = json.dumps(val, ensure_ascii=False)
+                row_data.append(val)
+            rows_to_append.append(row_data)
+            
+        sheet.append_rows(rows_to_append)
+        print(f"   ✅ Google Sheet [{sheet.title}]: 批量插入 {len(rows_to_append)} 条")
+        return True
 
     def send_notification(self, title: str, content: str) -> bool:
         """
