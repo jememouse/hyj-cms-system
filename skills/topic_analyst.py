@@ -75,11 +75,12 @@ class TopicAnalysisSkill(BaseSkill):
             if union == 0: continue
             
             sim = intersection / union
-            # 如果前 5 个字完全一样，也视为重复
-            if new_text[:5] == t[:5]:
+            # 放宽前缀匹配：原来的 5 个字太短（例如“化妆品包装”就会全部被杀），改为 12 个字以上前缀一致才算重复
+            if len(new_text) > 12 and len(t) > 12 and new_text[:12] == t[:12]:
                 return True
                 
-            if sim > threshold:
+            # 放宽整体相似度阈值，让更多 SEO 词条可以通过
+            if sim > 0.75:
                 return True
         return False
 
