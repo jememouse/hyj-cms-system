@@ -4,6 +4,9 @@ __pycache__/
 .venv/
 *.egg-info/
 
+# Credentials (通过 GitHub Secrets 注入 CI)
+service_account.json
+
 # System
 .DS_Store
 
