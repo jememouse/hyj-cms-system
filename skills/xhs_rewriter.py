@@ -1,11 +1,11 @@
 import sys
 import os
 import json
-import requests
+from typing import Dict
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.skill import BaseSkill
-from shared import config
+from shared import config, llm_utils
 
 class XHSRewriterSkill(BaseSkill):
     """
@@ -16,9 +16,6 @@ class XHSRewriterSkill(BaseSkill):
             name="xhs_rewrite", 
             description="使用 K.E.E.P 公式将文章重写为小红书风格"
         )
-        self.api_key = config.LLM_API_KEY
-        self.api_url = config.LLM_API_URL
-        self.model = config.LLM_MODEL
         
         # Prompt 保持不变
         self.SYSTEM_PROMPT = """你是一个在包装行业深耕10年的资深采购经理，人设是“犀利、懂行、爱分享”。
@@ -35,35 +32,6 @@ class XHSRewriterSkill(BaseSkill):
 - 多用短句，多用感叹号！
 - 加上 #标签。
 """
-
-    def _call_llm(self, prompt: str) -> str:
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        if "openrouter" in self.api_url:
-            headers["HTTP-Referer"] = "https://github.com/jememouse/deepseek-feisu-cms"
-            headers["X-Title"] = "DeepSeek CMS Agent"
-
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": self.SYSTEM_PROMPT},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 1.3 
-        }
-        
-        try:
-            resp = requests.post(self.api_url, headers=headers, json=payload, timeout=60)
-            if resp.status_code == 200:
-                return resp.json()['choices'][0]['message']['content']
-            else:
-                print(f"   ❌ LLM Error: {resp.status_code} - {resp.text}")
-                return ""
-        except Exception as e:
-            print(f"   ❌ Request Error: {e}")
-            return ""
 
     def execute(self, input_data: Dict) -> Dict:
         """
@@ -89,25 +57,20 @@ class XHSRewriterSkill(BaseSkill):
 2. 'title': 20字以内，极其吸睛。
 3. 'content': 900字以内，分段清晰。
 4. 'keywords': 提取 5 个适合做标签的关键词 (e.g. "包装设计", "创业搞钱")。
-
-返回示例:
-{{
-  "title": "...",
-  "content": "...",
-  "keywords": "..."
-}}
 """
-        result = self._call_llm(prompt)
-        # 清洗
-        result = result.replace("```json", "").replace("```", "").strip()
+        result = llm_utils.call_llm_json(
+            prompt=prompt,
+            system_prompt=self.SYSTEM_PROMPT,
+            temperature=1.3,
+            max_retries=2
+        )
         
-        try:
-            data = json.loads(result)
-            return data
-        except json.JSONDecodeError:
-            print("   ⚠️ JSON 解析失败，返回 Fallback 数据")
+        if result:
+            return result
+        else:
+            print("   ⚠️ LLM/JSON 解析失败，返回 Fallback 数据")
             return {
                 "title": f"🔥 {title}",
-                "content": result,
+                "content": context,
                 "keywords": "包装定制, 避坑指南"
             }

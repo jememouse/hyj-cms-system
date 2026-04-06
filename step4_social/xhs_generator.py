@@ -1,20 +1,15 @@
-
 import json
 import requests
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from shared import config
+from shared import config, llm_utils
 
 class XHSGenerator:
     """小红书内容生成器 (The Creator)"""
     
     def __init__(self):
-        self.api_key = config.LLM_API_KEY
-        self.api_url = config.LLM_API_URL
-        self.model = config.LLM_MODEL
-        
         # 定义 4 种差异化人设 (Personas)
         self.STYLES = {
             "insider": {
@@ -38,38 +33,6 @@ class XHSGenerator:
                 "instruction": """你是一个追求极致美学的设计师。文字要少而精，注重排版留白。多谈'质感'、'触感'、'视觉语言'。语气要高冷一点，不屑于谈价格，只谈品味。"""
             }
         }
-
-    def _call_llm(self, prompt: str, system_prompt: str) -> str:
-        """调用 LLM"""
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        if "openrouter" in self.api_url:
-            headers["HTTP-Referer"] = "https://github.com/jememouse/deepseek-feisu-cms"
-            headers["X-Title"] = "DeepSeek CMS"
-
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 1.3  # 高创造性
-        }
-        
-        try:
-            resp = requests.post(self.api_url, headers=headers, json=payload, timeout=60)
-            if resp.status_code == 200:
-                content = resp.json()['choices'][0]['message']['content']
-                if not content: return ""
-                return content
-            else:
-                print(f"❌ LLM Error: {resp.status_code} - {resp.text}")
-                return ""
-        except Exception as e:
-            print(f"❌ Request Error: {e}")
-            return ""
 
     def generate_note(self, title: str, content: str) -> dict:
         """生成小红书笔记"""
@@ -114,28 +77,21 @@ class XHSGenerator:
    - **防AI检测**: 严禁使用 "家人们"、"今天给大家分享"、"宝宝们" 等模板化开场。第一句必须直接抛出痛点、悬念或反直觉结论。
 4. **差异化**: 你的每一次输出都必须独一无二，不要雷同。
 5. **输出格式**: 仅返回 JSON。
-
-返回 JSON 示例:
-{{
-  "title": "...",
-  "content": "...",
-  "keywords": "..."
-}}
 """
-        result = self._call_llm(prompt, system_prompt)
+        result = llm_utils.call_llm_json(
+            prompt=prompt,
+            system_prompt=system_prompt,
+            temperature=1.3,
+            max_retries=2
+        )
         
-        # 清洗 Markdown 标记
-        result = result.replace("```json", "").replace("```", "").strip()
-        
-        try:
-            data = json.loads(result)
-            return data
-        except json.JSONDecodeError:
-            print("   ⚠️ JSON 解析失败，返回原始内容")
-            # Fallback
+        if result:
+            return result
+        else:
+            print("   ⚠️ LLM/JSON 解析失败，返回 Fallback 数据")
             return {
                 "title": f"🔥 {title}",
-                "content": result,
+                "content": context,
                 "keywords": "包装定制, 避坑指南"
             }
 
