@@ -45,10 +45,10 @@ jobs:
         FEISHU_TABLE_ID: ${{ secrets.FEISHU_TABLE_ID }}
         WELLCMS_USERNAME: ${{ secrets.WELLCMS_USERNAME }}
         WELLCMS_PASSWORD: ${{ secrets.WELLCMS_PASSWORD }}
-        WELLCMS_LOGIN_URL: ${{ secrets.WELLCMS_LOGIN_URL }}
-        WELLCMS_ADMIN_URL: ${{ secrets.WELLCMS_ADMIN_URL }}
-        WELLCMS_POST_URL: ${{ secrets.WELLCMS_POST_URL }}
-        FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+        WELLCMS_LOGIN_URL: "https://heyijiapack.com/news/user-login.html"
+        WELLCMS_ADMIN_URL: "https://heyijiapack.com/news/admin/index.php"
+        WELLCMS_POST_URL: "https://heyijiapack.com/news/admin/index.php?0=content&1=create&fid=0"
+        FEISHU_WEBHOOK_URL: "https://open.feishu.cn/open-apis/bot/v2/hook/009c15b4-fb99-4eaa-82a7-f1a190083bfc"
         PUBLISH_CONFIG_JSON: ${{ secrets.PUBLISH_CONFIG_JSON }}
         # Google Sheets Config
         GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
