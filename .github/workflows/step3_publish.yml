@@ -37,6 +37,7 @@ jobs:
         # 单类每次发送 10 篇（每小时发 30 篇）
         MAX_PUBLISH_PER_CATEGORY: "10"
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GOOGLE_GENAI_API_KEY: ${{ secrets.GOOGLE_GENAI_API_KEY }}
         OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
         FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
