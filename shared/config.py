@@ -31,13 +31,13 @@ FALLBACK_MODEL = "deepseek/deepseek-chat"
 # 飞书配置
 FEISHU_APP_ID = os.getenv("FEISHU_APP_ID", "").strip()
 FEISHU_APP_SECRET = os.getenv("FEISHU_APP_SECRET", "").strip()
-FEISHU_BASE_ID = os.getenv("FEISHU_BASE_ID", "ROVGbzfTfaEGjosDkxHck65Cnmx").strip()
+FEISHU_BASE_ID = os.getenv("FEISHU_BASE_ID", "").strip()
 FEISHU_TABLE_ID = "cms" # Mapped to Google Worksheet Name
-FEISHU_WEBHOOK_URL = os.getenv("FEISHU_WEBHOOK_URL", "https://open.feishu.cn/open-apis/bot/v2/hook/009c15b4-fb99-4eaa-82a7-f1a190083bfc").strip()
+FEISHU_WEBHOOK_URL = os.getenv("FEISHU_WEBHOOK_URL", "").strip()
 
 # Google Sheets Configuration
 GOOGLE_CREDENTIALS_FILE = os.path.join(PROJECT_ROOT, "service_account.json")
-GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "1EZePBUdlJa_nn_OVQJie4sFqgG4UxDJm56ZPah92eKY").strip()
+GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "").strip()
 GOOGLE_WORKSHEET_NAME = "cms" # Default
 
 # 社交媒体平台配置 (矩阵系统)
@@ -111,11 +111,11 @@ FEISHU_XHS_TABLE_ID = "xhs"
 MAX_DAILY_XHS = 12 # Default fallback
 
 # WellCMS 配置
-WELLCMS_USERNAME = os.getenv("WELLCMS_USERNAME", "product_manager")
-WELLCMS_PASSWORD = os.getenv("WELLCMS_PASSWORD", "5227756c4aae247b")
-WELLCMS_LOGIN_URL = os.getenv("WELLCMS_LOGIN_URL", "https://heyijiapack.com/news/user-login.html")
-WELLCMS_ADMIN_URL = os.getenv("WELLCMS_ADMIN_URL", "https://heyijiapack.com/news/admin/index.php")
-WELLCMS_POST_URL = os.getenv("WELLCMS_POST_URL", "https://heyijiapack.com/news/admin/index.php?0=content&1=create&fid=0")
+WELLCMS_USERNAME = os.getenv("WELLCMS_USERNAME", "")
+WELLCMS_PASSWORD = os.getenv("WELLCMS_PASSWORD", "")
+WELLCMS_LOGIN_URL = os.getenv("WELLCMS_LOGIN_URL", "")
+WELLCMS_ADMIN_URL = os.getenv("WELLCMS_ADMIN_URL", "")
+WELLCMS_POST_URL = os.getenv("WELLCMS_POST_URL", "")
 
 # 配置文件
 CONFIG_FILE = os.path.join(PROJECT_ROOT, "box_artist_config.json")
