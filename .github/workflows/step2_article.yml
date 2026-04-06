@@ -12,6 +12,9 @@ env:
 jobs:
   step2-article:
     runs-on: ubuntu-latest
+    concurrency:
+      group: step2-article
+      cancel-in-progress: false
     
     steps:
     - name: Checkout code

@@ -12,6 +12,9 @@ env:
 jobs:
   step1-trends:
     runs-on: ubuntu-latest
+    concurrency:
+      group: step1-trends
+      cancel-in-progress: false
     
     steps:
     - name: Checkout code
