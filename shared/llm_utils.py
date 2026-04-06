@@ -181,6 +181,7 @@ def call_llm_with_retry(
                 if resp.status_code == 200:
                     data = resp.json()
                     if 'choices' in data:
+                        print(f"   ✨ [{channel_name}] 调用成功")
                         return data['choices'][0]['message']['content']
                     else:
                         print(f"   ⚠️ [{channel_name}] 响应格式异常: {data}")
