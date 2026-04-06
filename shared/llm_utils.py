@@ -204,6 +204,7 @@ def call_llm_with_retry(
         print(f"   🆓 尝试使用 Google GenAI 前置通道 ({config.GOOGLE_GENAI_MODEL})...")
         try:
             from google import genai
+            from google.genai import types
             client = genai.Client(api_key=config.GOOGLE_GENAI_API_KEY)
             
             prompt_text = ""
@@ -216,6 +217,10 @@ def call_llm_with_retry(
                     response = client.models.generate_content(
                         model=config.GOOGLE_GENAI_MODEL,
                         contents=prompt_text,
+                        config=types.GenerateContentConfig(
+                            temperature=temperature,
+                            max_output_tokens=8192
+                        )
                     )
                     if response and response.text:
                         print(f"   ✨ [Google GenAI] 调用成功")
