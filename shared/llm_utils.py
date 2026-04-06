@@ -199,13 +199,39 @@ def call_llm_with_retry(
 
         return None  # 该通道所有重试均失败
 
-    # ── 免费前置通道: OpenRouter 免费模型 ──
-    if config.FREE_API_KEY and config.FREE_MODEL:
-        print(f"   🆓 尝试使用 OpenRouter 前置免费通道 ({config.FREE_MODEL})...")
-        # 免费通道建议缩短重试次数或使用默认 max_retries
-        result = _try_channel(config.FREE_API_KEY, config.FREE_API_URL, config.FREE_MODEL, "OpenRouter免费")
-        if result:
-            return result
+    # ── 免费前置通道: Google GenAI 模型 ──
+    if hasattr(config, 'GOOGLE_GENAI_API_KEY') and config.GOOGLE_GENAI_API_KEY:
+        print(f"   🆓 尝试使用 Google GenAI 前置通道 ({config.GOOGLE_GENAI_MODEL})...")
+        try:
+            from google import genai
+            client = genai.Client(api_key=config.GOOGLE_GENAI_API_KEY)
+            
+            prompt_text = ""
+            if system_prompt:
+                prompt_text += f"{system_prompt}\n\n"
+            prompt_text += prompt
+
+            for attempt in range(max_retries + 1):
+                try:
+                    response = client.models.generate_content(
+                        model=config.GOOGLE_GENAI_MODEL,
+                        contents=prompt_text,
+                    )
+                    if response and response.text:
+                        print(f"   ✨ [Google GenAI] 调用成功")
+                        return response.text
+                    else:
+                        print(f"   ⚠️ [Google GenAI] 响应为空")
+                except Exception as e:
+                    print(f"   ❌ [Google GenAI] 请求异常 (尝试 {attempt + 1}/{max_retries + 1}): {e}")
+                
+                if attempt < max_retries:
+                    time.sleep(retry_delay * (attempt + 1))
+        except ImportError:
+            print("   ⚠️ [Google GenAI] 未检测到 google-genai 库，请先执行 `pip install google-genai`。")
+        except Exception as e:
+            print(f"   ⚠️ [Google GenAI] 客户端初始化异常: {e}")
+            
         print("   ⚠️ 免费前置通道失败，即将降级到原有主通道策略...")
 
     # ── 主通道: DeepSeek 官方 ──
