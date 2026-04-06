@@ -45,6 +45,10 @@ jobs:
         FEISHU_TABLE_ID: ${{ secrets.FEISHU_TABLE_ID }}
         WELLCMS_USERNAME: ${{ secrets.WELLCMS_USERNAME }}
         WELLCMS_PASSWORD: ${{ secrets.WELLCMS_PASSWORD }}
+        WELLCMS_LOGIN_URL: ${{ secrets.WELLCMS_LOGIN_URL }}
+        WELLCMS_ADMIN_URL: ${{ secrets.WELLCMS_ADMIN_URL }}
+        WELLCMS_POST_URL: ${{ secrets.WELLCMS_POST_URL }}
+        FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
         PUBLISH_CONFIG_JSON: ${{ secrets.PUBLISH_CONFIG_JSON }}
         # Google Sheets Config
         GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
