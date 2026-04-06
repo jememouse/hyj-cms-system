@@ -1,9 +1,9 @@
 import os
 from google import genai
 
-# 1. 配置 API Key (使用你提供的测试 Key)
-# 最佳实践提示：在生产环境中，强烈建议将 API Key 存放在环境变量中 (例如 os.getenv("GEMINI_API_KEY"))
-API_KEY = "AIzaSyDpH5tiI4-WRg4spvF_CjI7wCpsvuQGoUs"
+# 1. 配置 API Key (使用环境变量提升安全性)
+# 最佳实践提示：在生产环境中，强烈建议将 API Key 存放在环境变量中
+API_KEY = os.getenv("GOOGLE_GENAI_API_KEY", "你的_GOOGLE_GENAI_API_KEY")
 
 # 2. 初始化 Google GenAI 客户端
 client = genai.Client(api_key=API_KEY)
