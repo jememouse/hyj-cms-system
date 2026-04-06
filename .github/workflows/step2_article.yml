@@ -2,8 +2,8 @@ name: Step2 - AI 文章生成
 
 on:
   schedule:
-    # 北京时间 00:45, 06:45, 12:45, 18:45 (每6小时，滞后 Step 1 45分钟)
-    - cron: '45 */6 * * *'
+    # 工业级极速引擎：滞后 Step 1 十五分钟，每 3 小时准时清空队列
+    - cron: '15 */3 * * *'
   workflow_dispatch:  # 允许手动触发
 
 env:
@@ -27,6 +27,8 @@ jobs:
 
     - name: Run Step2 - AI 文章生成 (按时间顺序处理所有文章)
       env:
+        # 无数量上限（足够一次性消化每日所有热点标题）
+        MAX_GENERATE_PER_CATEGORY: "1000"
         # 使用国内 DeepSeek 直连 API
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
