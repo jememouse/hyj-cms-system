@@ -30,35 +30,42 @@ class TopicAnalysisSkill(BaseSkill):
         trends = input_data.get("trends", [])
         if not trends: return []
 
-        # 1. 第一步：筛选 20 个热点
+        # 1. 第一步：筛选热点
         analyzed_trends = self._analyze_trends(trends, input_data)
         
         results = []
         generated_texts = [] # 用于去重检查
 
-        # 2. 第二步：为每个热点生成标题
-        for idx, trend in enumerate(analyzed_trends):
-            print(f"   🧠 [Analyst] 生成标题 ({idx+1}/{len(analyzed_trends)}): {trend['topic']}")
-            titles = self._generate_titles(trend, input_data.get("config", {}))
-            
-            for t in titles:
-                raw_title = t['title'].strip()
-                
-                # [Deduplication] 查重
-                if self._is_text_similar(raw_title, generated_texts):
-                    print(f"   🗑️ [Dedupe] 丢弃高相似度标题: {raw_title}")
-                    continue
-                
-                generated_texts.append(raw_title)
-                
-                results.append({
-                    "Topic": raw_title,
-                    "大项分类": self._clean_category(t['category']),
-                    "Status": "Pending",
-                    "Source_Trend": trend['topic'],
-                    "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                })
+        # 2. 第二步：批量为所有热点生成标题 (Batching)
+        print(f"   🧠 [Analyst] 启动大模型批处理，为 {len(analyzed_trends)} 个热点一次性生成标题...")
+        titles_batch = self._generate_titles_batch(analyzed_trends, input_data.get("config", {}))
         
+        if not titles_batch:
+             print("   ❌ [Analyst] 批量生成标题失败，LLM未返回有效数据")
+             return []
+
+        for t in titles_batch:
+            raw_title = t.get('title', '').strip()
+            if not raw_title: 
+                continue
+                
+            # [Deduplication] 查重
+            if self._is_text_similar(raw_title, generated_texts):
+                print(f"   🗑️ [Dedupe] 丢弃高相似度标题: {raw_title}")
+                continue
+            
+            generated_texts.append(raw_title)
+            
+            # 使用 LLM 返回的 source 匹配，若没有则用 unknown
+            results.append({
+                "Topic": raw_title,
+                "大项分类": self._clean_category(t.get('category', '')),
+                "Status": "Pending",
+                "Source_Trend": t.get('source_topic', 'Unknown Trend'),
+                "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            
+        print(f"   ✅ [Analyst] 批量处理完毕，最终入库有效不重复标题 {len(results)} 个")
         return results
 
     def _is_text_similar(self, new_text: str, existing_texts: List[str], threshold: float = 0.6) -> bool:
@@ -183,52 +190,57 @@ class TopicAnalysisSkill(BaseSkill):
         
         return analyzed_trends[:target_count]
 
-    def _generate_titles(self, trend, brand_config):
+    def _generate_titles_batch(self, trends, brand_config):
+        if not trends: 
+            return []
+            
         brand_name = brand_config.get('brand', {}).get('name', '盒艺家')
-        topic = trend.get('topic', '')
-        angle = trend.get('angle', '')
-        
-        # Get counts from config
         trend_settings = brand_config.get('trend_settings', {})
         count = trend_settings.get('titles_per_trend', 3)
-
-        # 动态获取当前年份
         current_year = datetime.now().year
+
+        # 构造热点长文本清单
+        trends_str = ""
+        for i, trend in enumerate(trends):
+            t_topic = trend.get('topic', '')
+            t_angle = trend.get('angle', '无')
+            trends_str += f"{i+1}. 【{t_topic}】 (切入角度: {t_angle})\n"
+
+        expected_total = len(trends) * count
 
         prompt = f"""
         背景：{brand_name} (既接B2B大单，也接B2C小单，**1个起订**)
-        热点：{topic} (角度: {angle})
         当前年份：{current_year}年
 
-        任务：生成 {count} 个标题。
-        要求：
-        1. **多样化句式（拒绝公式化 - 严厉执行）**：
-           - **绝对违禁词** (出现即判定为劣质)：
-             - 严禁使用 "高级感(礼盒)的秘密"、"还在为...发愁"、"告别(买家秀)"
-             - 严禁使用 "XX的正确打开方式"、"一文看懂"、"一站式平台"
-             - 严禁使用 "案例复盘："、"故事："、"1个起订，"、"2026年"（除非必要）
-           - **拒绝排比**：{count}个标题的句式和前半句必须完全不同。
-        2. **针对不同分类，必须使用截然不同的标题风格（极其重要）**：
-           - **【专业知识】分类（硬核学术风）**：必须是学术标准、技术白皮书、词典辞条或工程指南风格。例如："瓦楞纸板边压强度(ECT)与耐破度标准化测试指南"、"食品级包装阻隔涂层原理解析"。**严禁** 任何悬念、反问或惊叹号！必须客观严谨。
-           - **【行业资讯/产品介绍】分类（高点击率营销风）**：
-             - 悬念型："袜子销量翻倍？没想到仅仅是换了这个包装..."
-             - 直击痛点："小批量定制太贵？源头厂长说了真话"
-             - 数据说话："客单价提升30%的秘密：揭秘大牌礼盒设计逻辑"
-             - 避坑指南："劝退！这3种包装材质千万别踩雷"
-        3. **字数控制**：30个字符以内（允许更完整的长标题）。
-        4. **分类强制分布 (极度重要！)** ({count}个总数)：
-           - 你必须**均衡地**将标题分配到这三个分类中：【专业知识】、【行业资讯】、【产品介绍】。
-           - 若生成3个标题，则**必须严格做到**：1个属于【专业知识】，1个属于【行业资讯】，1个属于【产品介绍】。绝对不允许扎堆！
-           **注意**：不要返回独立或者自定义的分类，必须且只能从上述三个标准分类中选择。
+        核心任务：我将提供 {len(trends)} 个热点话题。请你为【列表中的每一项热点】分别生成 {count} 个 SEO 标题。
+        这就意味着，你总共必须精确输出 {expected_total} 条数据记录！
 
-        返回 JSON:
+        === 热点话题列表 ===
+        {trends_str}
+        ====================
+
+        要求（必须严格遵守）：
+        1. **多样化句式（拒绝公式化）**：
+           - **绝对违禁词**：严禁出现 "高级感的秘密"、"还在为...发愁"、"一文看懂"、"正确打开方式" 等老套句式。
+           - **拒绝排比**：不仅每个热点的 {count} 个标题句式要不同，不同热点之间的标题前半句也必须完全错开！
+        2. **针对不同分类的标题风格**：
+           - **【专业知识】分类（硬核学术风）**：必须像白皮书或技术词典，客观严谨（如: "食品级包装阻隔涂层原理解析"）。严禁惊叹号和反问句。
+           - **【行业资讯/产品介绍】分类（高点击营销风）**：运用悬念、痛点或数据说话（如: "客单价提升30%的秘密：揭秘大牌礼盒底托设计逻辑"）。
+        3. **分类均衡**：对于上述每一个热点，其所属的 {count} 个标题必须均衡交叉覆盖这三个分类类别。绝对不允许 3 个标题全都是"专业知识"。
+        4. **字段约束**：为了关联热点跟踪，你必须在每条返回的 JSON 里附带 "source_topic" 字段，写入当时你参照的原热点完整名称。
+
+        请严格仅返回 JSON 数组对象格式：
         [
-            {{"title": "标题1", "category": "专业知识"}},
-            ... (共{count}个)
+            {{"source_topic": "热点A的名字", "title": "热点A的标题1", "category": "专业知识"}},
+            {{"source_topic": "热点A的名字", "title": "热点A的标题2", "category": "产品介绍"}},
+            {{"source_topic": "热点B的名字", "title": "热点B的标题1", "category": "行业资讯"}},
+            ... (总共精准返回 {expected_total} 条)
         ]
         """
+        
+        # 为了一次吞吐大量文本，可能需要更高的容错时间 (使用 shared 工具底层的 requests 已经配了 timeout=90)
         res = llm_utils.call_llm_json_array(prompt, temperature=0.7, max_retries=2)
-        return res[:count] if res else []
+        return res if res else []
 
     def _clean_category(self, cat):
         valid_cats = ["专业知识", "行业资讯", "产品介绍"]
