@@ -37,6 +37,7 @@ def load_publish_config():
 
 
 def run():
+    start_ts = time.time()
     print("\n" + "=" * 50)
     print("🤖 启动 Agentic Workflow (Step 3: Publishing)")
     print("=" * 50 + "\n")
@@ -236,7 +237,11 @@ def run():
 
     # 发送飞书通知
     if total_success > 0 or total_fail > 0:
-        notify_content = f"**发布结果**\n- ✅ 成功: {total_success} 篇\n- ❌ 失败: {total_fail} 篇\n- ⏰ 时间: {time.strftime('%Y-%m-%d %H:%M')}\n\n{stats.get_summary()}"
+        end_ts = time.time()
+        elapsed_seconds = int(end_ts - start_ts)
+        elapsed_str = f"{elapsed_seconds // 60}分{elapsed_seconds % 60}秒"
+        
+        notify_content = f"**发布结果**\n- ✅ 成功: {total_success} 篇\n- ❌ 失败: {total_fail} 篇\n- ⏱️ 耗时: {elapsed_str}\n- ⏰ 时间: {time.strftime('%Y-%m-%d %H:%M')}\n\n{stats.get_summary()}"
         client.send_notification(
             title="📤 CMS 发布任务完成",
             content=notify_content
