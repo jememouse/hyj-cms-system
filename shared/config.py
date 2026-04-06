@@ -15,7 +15,7 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 
 # 免费前置通道: Google GenAI 模型 (优先使用)
-GOOGLE_GENAI_API_KEY = os.getenv("GOOGLE_GENAI_API_KEY", "AIzaSyDpH5tiI4-WRg4spvF_CjI7wCpsvuQGoUs").strip()
+GOOGLE_GENAI_API_KEY = os.getenv("GOOGLE_GENAI_API_KEY", "").strip()
 GOOGLE_GENAI_MODEL = "gemma-4-26b-a4b-it"
 
 # 主通道: DeepSeek 官方直连
