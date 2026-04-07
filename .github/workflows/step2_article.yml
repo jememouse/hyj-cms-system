@@ -30,8 +30,6 @@ jobs:
 
     - name: Run Step2 - AI 文章生成 (按时间顺序处理所有文章)
       env:
-        # 无数量上限（足够一次性消化每日所有热点标题）
-        MAX_GENERATE_PER_CATEGORY: "1000"
         # 使用国内 DeepSeek 直连 API
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         GOOGLE_GENAI_API_KEY: ${{ secrets.GOOGLE_GENAI_API_KEY }}

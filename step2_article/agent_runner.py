@@ -35,8 +35,8 @@ def run():
     print(f"📋 从表格获取到 {len(priority_topics)} 个特权选题及 {len(ready_topics)} 个常规选题")
     
     # Load Config Limit
-    max_limit = config.MAX_GENERATE_PER_CATEGORY
-    print(f"⚙️  常规分类处理上限: {max_limit}")
+    max_total_limit = config.STEP2_STRATEGY.get("max_generate_total", 100)
+    print(f"⚙️  总处理上限 (所有分类合计): {max_total_limit}")
 
     # 3. 分组与 Round-Robin 排序 (仅针对常规 Ready 选题)
     # Group by Category
@@ -67,15 +67,19 @@ def run():
         
     # (2) 常规选题进行 Round-Robin Merge
     from itertools import zip_longest
-    # 取每个分类的前 max_limit 条
-    lists = [items[:max_limit] for items in grouped_topics.values()]
+    # We want to merge the categories evenly. 
+    # Grab all items from each category instead of slicing by per_category limit
+    lists = list(grouped_topics.values())
     
     for items in zip_longest(*lists):
         for item in items:
             if item is not None:
                 sorted_topics.append(item)
                 
-    print(f"🔄 排序(头部特权排队+普通均衡)后共 {len(sorted_topics)} 条任务")
+    # 严格按照总上限进行切割 (特权选题依然排在最前面占额度)
+    sorted_topics = sorted_topics[:max_total_limit]
+                
+    print(f"🔄 排序(头部特权排队+普通均衡)后共取 {len(sorted_topics)} 条任务准备执行")
     
     import random
     from datetime import datetime
@@ -151,9 +155,10 @@ def run():
                 client.create_record(fields)
                 print("   ⚠️ 未找到 record_id，创建了新记录")
         
-        # Random Interval
-        # Optimization: 3-5s interval (DeepSeek rate limit is generous)
-        wait_time = random.uniform(3, 5)
+        # Random Interval based on strategy config
+        wait_min = config.STEP2_STRATEGY.get("wait_time_min", 2.0)
+        wait_max = config.STEP2_STRATEGY.get("wait_time_max", 4.0)
+        wait_time = random.uniform(wait_min, wait_max)
         print(f"   ⏳ 等待 {wait_time:.1f} 秒...")
         time.sleep(wait_time)
 
