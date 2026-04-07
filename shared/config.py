@@ -137,7 +137,7 @@ STATUS_PUBLISHED = "Published" # 节点3完成: 已发布
 
 # 核心业务策略配置
 STEP2_STRATEGY = {
-    "max_generate_total": 100, # 每次运行文章生成总数限制 (合并所有分类)
+    "max_generate_total": 120, # 每次运行文章生成总数限制 (合并所有分类)
     "wait_time_min": 2.0,      # 生成后最少等待时间(秒)
     "wait_time_max": 4.0       # 生成后最大等待时间(秒)
 }
