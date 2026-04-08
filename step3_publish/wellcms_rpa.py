@@ -622,21 +622,19 @@ class WellCMSPublisher:
                 logger.error(f"封面图逻辑错误: {e}")
             # -------------------------------------------------------------------
             
-            # 填写 SEO 字段
-            self.page.evaluate("""(data) => {
-                const brief = document.querySelector('#brief');
-                if (brief) brief.value = data.summary || '';
-                
-                const keyword = document.querySelector('#keyword');
-                if (keyword) keyword.value = data.keywords || '';
-                
-                const description = document.querySelector('#description');
-                if (description) description.value = data.description || '';
-            }""", {
-                'summary': article.get('summary', ''),
-                'keywords': article.get('keywords', ''),
-                'description': article.get('description', '')
-            })
+            # 填写 SEO 字段 (使用 fill 触发事件，比 evaluate 更安全)
+            seo_data = {
+                '#brief, textarea[name="brief"]': article.get('summary', ''),
+                '#keyword, input[name="keyword"]': article.get('keywords', ''),
+                '#description, textarea[name="description"]': article.get('description', '')
+            }
+            
+            for selector, value in seo_data.items():
+                if value:
+                    try:
+                        self.page.fill(selector, value, timeout=2000)
+                    except Exception:
+                        pass
             
             # 勾选"禁止评论"
             self.page.evaluate("""() => {
@@ -647,13 +645,17 @@ class WellCMSPublisher:
             }""")
             time.sleep(0.5)
             
-            # 填写 tags
+            # 填写 tags (兼容多个常见命名，并尝试回车触发)
             tags = article.get('tags', '')
             if tags:
-                self.page.evaluate("""(tagsValue) => {
-                    const tagsInput = document.querySelector('#tags');
-                    if (tagsInput) tagsInput.value = tagsValue;
-                }""", tags)
+                try:
+                    tag_selector = '#tags, #tag, input[name="tags"], input[name="tag"]'
+                    self.page.fill(tag_selector, tags, timeout=2000)
+                    # 某些标签系统（比如 token input）需要按回车或空格才能生成真正的数据块
+                    self.page.press(tag_selector, 'Enter')
+                    print(f"      🏷️ 已填写 tags: {tags}")
+                except Exception as e:
+                    print(f"      ⚠️ 填写 tags 失败: {e}")
             time.sleep(0.5)
             
             # 填写正文 (UEditor) - 增强版
