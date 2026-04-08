@@ -95,8 +95,13 @@ class TopicAnalysisSkill(BaseSkill):
         import re
         trends_str = "\n".join([f"- {t}" for t in trends])
 
-        # 动态选择城市 (GEO 策略)
-        GEO_CITIES = ["东莞", "深圳", "广州", "上海", "杭州", "苏州", "义乌", "佛山"]
+        # 动态选择城市 (GEO Local SEO 策略同步扩展至内陆核心节点与轻工业重镇)
+        GEO_CITIES = [
+            "东莞", "深圳", "广州", "佛山", "中山", "珠海",
+            "上海", "杭州", "苏州", "宁波", "义乌", "无锡", "常州",
+            "青岛", "济南", "北京", "天津",
+            "成都", "重庆", "武汉", "郑州", "西安", "长沙", "合肥", "晋江"
+        ]
         selected_city = random.choice(GEO_CITIES)
         
         trend_settings = input_data.get("config", {}).get("trend_settings", {})
