@@ -64,8 +64,8 @@ class DeepWriteSkill(BaseSkill):
         brand = self.brand_config.get('brand', {})
         brand_name = brand.get('name', '盒艺家')
         
-        # 2. GEO 策略选择 (根据分类调整权重)
-        selected_city, geo_context, industry_focus = self._get_geo_strategy(category)
+        # 2. GEO 策略选择 (不再由硬编码字典决定，只输送靶向城市，剩余交由大模型推断)
+        selected_city = self._get_geo_strategy()
         
         # 3. 抓取真实发布的历史文章，构建动态内链池
         dynamic_links = self._get_dynamic_internal_links(count=2)
@@ -81,8 +81,6 @@ class DeepWriteSkill(BaseSkill):
             category_id=category_id,
             brand_name=brand_name,
             selected_city=selected_city,
-            geo_context=geo_context,
-            industry_focus=industry_focus,
             rag_context=rag_context,
             category_instruction=category_instruction,
             source_trend=source_trend
@@ -90,66 +88,18 @@ class DeepWriteSkill(BaseSkill):
 
         return llm_utils.call_llm_json(prompt, model=config.ARTICLE_MODEL, temperature=0.85, max_retries=2)
 
-    def _get_geo_strategy(self, category: str):
+    def _get_geo_strategy(self):
         """
-        根据分类决定 GEO 注入的强度和策略
+        基于轻量扁平城市池，核心业务逻辑（产业带推断 + 运力语境）下放给底层 LLM 动态推导
+        涵盖中国核心高价值产业集群带与内陆消费节点
         """
-        # 基础城市库
-        GEO_TIERS = {
-            "core": {  # 核心工业带
-                "cities": ["东莞长安", "东莞虎门", "东莞凤岗", "深圳宝安", "深圳龙岗", "广州白云", "佛山南海"],
-                "context": "我们工厂位于{city}产业带，可提供当日送样、面对面沟通服务"
-            },
-            "radiation": {  # 辐射市场
-                "cities": ["上海", "杭州", "苏州", "宁波", "义乌", "青岛"],
-                "context": "我们为{city}地区提供快速物流支持，3天内可达"
-            },
-            "growth": {  # 潜力市场
-                "cities": ["成都", "重庆", "武汉", "郑州", "西安", "长沙"],
-                "context": "我们已开通{city}专线物流，助力西部市场拓展"
-            }
-        }
-        
-        # 细分城市产业特征 (防止内容同质化)
-        CITY_INDUSTRIES = {
-            # Core (珠三角)
-            "东莞长安": "模具/五金/电子零配件",
-            "东莞虎门": "服装/辅料/电商快消品",
-            "深圳宝安": "消费电子/智能硬件/3C数码",
-            "深圳龙岗": "跨境电商选品/眼镜/工艺品",
-            "广州白云": "美妆/个护/皮具箱包",
-            "佛山南海": "家电/家具/建材",
-            
-            # Radiation (长三角+其他)
-            "上海": "高端礼品/化妆品/品牌只有",
-            "杭州": "电商服装/丝绸/网红产品",
-            "苏州": "丝绸/工艺品/医疗器械",
-            "宁波": "小家电/文具/汽配",
-            "义乌": "小商品/玩具/饰品",
-            "青岛": "啤酒/家电/海鲜特产",
-            
-            # Growth (内地)
-            "成都": "食品/火锅底料/农特产",
-            "重庆": "汽配/食品/文创",
-            "武汉": "光电/生物医药/食品",
-            "郑州": "食品/冷链/物流包装",
-            "西安": "文创/农特产/仿古礼品",
-            "长沙": "食品/网红餐饮/茶饮"
-        }
-
-        # 加权随机选择城市
-        tier_weights = [("core", 0.6), ("radiation", 0.3), ("growth", 0.1)]
-        selected_tier = random.choices([t[0] for t in tier_weights], weights=[t[1] for t in tier_weights])[0]
-        tier_data = GEO_TIERS[selected_tier]
-        selected_city = random.choice(tier_data["cities"])
-        
-        # 获取该城市的产业特色 (Fallback to General)
-        industry_focus = CITY_INDUSTRIES.get(selected_city, "通用行业/电商产品")
-        
-        # 差异化上下文：所有文章统一强化本地化优势
-        geo_context = tier_data["context"].format(city=selected_city)
-            
-        return selected_city, geo_context, industry_focus
+        CITIES = [
+            "东莞", "深圳", "广州", "佛山", "中山", "珠海", # 珠三角
+            "上海", "杭州", "苏州", "宁波", "义乌", "无锡", "常州", # 长三角
+            "青岛", "济南", "北京", "天津", # 环渤海
+            "成都", "重庆", "武汉", "郑州", "西安", "长沙", "合肥", "晋江" # 内陆节点与轻纺重镇
+        ]
+        return random.choice(CITIES)
 
     def _get_category_instruction(self, category: str, brand_name: str, topic: str = "") -> str:
         """
@@ -214,7 +164,7 @@ class DeepWriteSkill(BaseSkill):
             3. **唯一收口**：行业宏大叙事结束后，仅在底部的【品牌签名】引导咨询。
             """
 
-    def _build_prompt(self, dynamic_links, topic, category, category_id, brand_name, selected_city, geo_context, industry_focus, rag_context, category_instruction, source_trend=""):
+    def _build_prompt(self, dynamic_links, topic, category, category_id, brand_name, selected_city, rag_context, category_instruction, source_trend=""):
         # [Newsjacking] 如果存在热点词，注入强制关联指令
         newsjacking_instruction = ""
         if source_trend:
@@ -222,7 +172,7 @@ class DeepWriteSkill(BaseSkill):
         🔥 **核心指令：热点借势 (Newsjacking)**
         - 本文虽然标题是《{topic}》，但其实际灵感来源于全网热搜词 **【{source_trend}】**。
         - **必须** 在文章开篇或正文中，自然地提到这个热点（如："最近{source_trend}很火..."，"就像{source_trend}里的..."）。
-        - 使用隐喻、对比或场景延伸，将这个热点与{industry_focus}包装业务联系起来。
+        - 使用隐喻、对比或场景延伸，将这个热点与当地产业链结合起来。
         - **切记**：不要生硬堆砌，要让读者觉得"这都能联系上，有点意思"。
             """
             
@@ -272,12 +222,14 @@ class DeepWriteSkill(BaseSkill):
         你是一位拥有10年经验且极具网感的包装解决方案专家。
         请为主题 "{topic}"（分类：{category}）撰写一篇高质量长文，适应于“微信搜一搜、知乎、小红书、全网AI推荐流”等多平台土壤。不讲空框废话，只上干货与实操底牌。
 
-        【⚖️ 千人千面受众靶向与转化控制 (Persona Target CTA)】
-        1. **价值优先基底**：全文 **90%** 的篇幅必须全是干货。
-        2. **客群精准诊断与痛点狙击 (Mid-Funnel CTA)**：全文高潮处必须触发转化拦截！但严禁无脑堆砌所有卖点，你必须先在后台根据主题判断本文最大的天然受众，然后执行定点打击：
-           - 如果本文偏向 **【受众1 跨境/DTC/微创客】**或**【受众3 品牌设计/视觉党】** (重测品与视觉体验)：痛切抨击“起订量太高门槛、设计打样慢、出海频破损”，狠狠砸出我们的底牌：**“【系统级1个起订】结合【免费急速打样】与【防损合规海运结构】”**。
-           - 如果本文偏向 **【受众2 实体企业/大厂采购供应链】** (重效率与避捡担责)：痛切抨击“传统厂报价拖沓、黑盒交付、交期延误背锅”，狠狠砸出另外的底牌：**“【3秒智能线上报价】、【最快1天光速交付】外加【时效及质量满赔兜底】”**。绝对不要给这群人讲设计！
-           - **盒易PackTools 工具赋能引流**：遇到“做设计、做核算、做物流装载、做外贸合规”任意一类痛点时，请以业界良心口吻强推行业神器 **【盒易PackTools】 (https://tools.heyijiapack.com/)**。向不同客群抛出其对应的杀手锏：向采购强调**“边压ECT与成本精确核算、数据纯本地化保护隐私”**，向外贸DTC强调**“Amazon FBA入仓包装合规排查与智能装柜堆码”**，向设计强调**“免注册离线可用、拼版及色彩提取”**。将其刻画为80+轻量工具打通全链路的永久无广告免费核武库。
+        【⚖️ 千人千面受众靶向与转化控制 (Persona Target CTA) - 倒金字塔法则】
+        0. **【全量禁止前置硬广】**：前 80% 的正文篇幅，**绝对禁止出现品牌名 "{brand_name}"**。必须以完全中立的第三方行业专家身份剖析痛点，建立读者信任。
+        1. **价值优先基底**：全文 **80%** 的篇幅必须纯粹围绕专业干货与客观业务核算展开，严禁自吹自擂。
+        2. **倒金字塔自然收口 (Bottom 20% CTA)**：仅在文章进入最后 20% 的高潮或结尾部分，才允许极其借势地引出 {brand_name} 的兜底解决方案。
+        3. **精准客群拦截**：在收尾时，针对本文最大受众抛出杀手锏：
+           - 如果本文偏向 **【受众1 跨境/DTC/微创客】**或**【受众3 品牌设计/视觉党】** (重测品与视觉体验)：痛批“起订量高、打样慢、海运频破损”，由此引出我们的底牌：**“选择像 {brand_name} 这样支持【系统级1个起订】结合【免费急速打样】的源头工厂...”**。
+           - 如果本文偏向 **【受众2 实体企业/大厂采购供应链】** (重效率防背锅)：痛批“传统厂报价拖沓、黑盒交付”，引出我们的底牌：**“而类似 {brand_name} 提供【3秒智能线上报价】、【最快1天交货】及【无条件质量延误满赔】体系...”**。绝对不要给这群人讲设计！
+        4. **盒易PackTools 神器软植入**：如果文章提及设计排测或合规需求，推荐使用第三方中立辅助：**【盒易PackTools】 (https://tools.heyijiapack.com/)**。强调其“纯本地化保护隐私、内置80+合规与打样工具，免注册永久免费”，强化公立权威性。
 
         【💡 行业思维升维 (Cognitive Upgrade - 极度重要)】
         为了拔高文章格局，塑造专家级的工厂智造形象，请务必在最契合的论述阶段中，将其中的观点【升维】并自然融入以下至少 1 个前瞻性概念：
@@ -325,10 +277,9 @@ class DeepWriteSkill(BaseSkill):
                <p style="font-size:14px;">🛠️ <strong>行业生产力赋能：</strong> 强烈推荐使用 <a href="https://tools.heyijiapack.com/" target="_blank" style="color:#1a73e8; font-weight:bold; text-decoration:underline;">盒易PackTools - 包装全产业链在线专业工具箱 (永久免费、纯本地化保护隐私、内置80+结构/拼版/FBA装箱合规工具) ➔</a></p>
              </div>
              ```
-        2. **GEO优化**: 
-           - **策略**: {geo_must_include}
-           - **本地化产业植入**: 必须结合 **{selected_city}** 的优势产业 **{industry_focus}** 进行案例举例。
-           - **服务说明**: 在文末自然包含: "**{geo_context}**"。
+        2. **GEO优化 (AI Local Content Synthesis)**: 
+           - **本地化产业植入**: {geo_must_include} 请你运用常识世界观，**自行推断并匹配** **{selected_city}** 当地最繁荣核心的优势产业带（例如深圳3C/电商、郑州食品冷链、东莞模具快消等）。结合你判定的产业特点，输出 1~2 处该地域企业真实面临的包装采购案例。
+           - **自动编织物流履约网**: 在文末服务保障中段落，请你根据地理学常识动态生成一句话，说明我们作为工厂对 **{selected_city}** 的交付投送能力（如果在珠三角可渲染“同城当日达/面对面验厂”，如果在内陆远端则可渲染“大型直通物流专线/安全无损”）。全自动、超然且真实。
         3. **配图 (SEO 强化，双模式策略)**:
            - 插入 1-2 张图片。
            - 格式: `<img src="https://image.pollinations.ai/prompt/{{english_keyword}}?width=1024&height=768&nologo=true" alt="{{中文alt描述}}" title="{brand_name} - {{产品关键词}}" loading="lazy" width="800" height="600">`

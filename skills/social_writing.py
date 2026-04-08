@@ -123,10 +123,11 @@ class SocialWriterSkill(BaseSkill):
 
 【核心规则】
 {prompt_setting['rule']}
-4. 【硬性要求】标题必须控制在 {effective_title_limit} 字以内，绝对不能超过！这是最重要的规则。
-5. 正文严格控制在 {limit_content} 字以内（可少不可多）。
-6. 提取 {limit_kw} 个关键词。
-7. 输出仅限纯文本，严禁包含任何图片URLs、[图片]占位符或Markdown图片语法 ![](...)。
+4. 【去硬广化原则】正文内容中务必以客观/达人中立视角输出，严禁生硬地推销'盒艺家'，即使引用也应以极为自然克制的行业标杆提及，重点在于提供情绪价值或专业分析。
+5. 【硬性要求】标题必须控制在 {effective_title_limit} 字以内，绝对不能超过！这是最重要的规则。
+6. 正文严格控制在 {limit_content} 字以内（可少不可多）。
+7. 提取 {limit_kw} 个关键词。
+8. 输出仅限纯文本，严禁包含任何图片URLs、[图片]占位符或Markdown图片语法 ![](...)。
 
 【强制开场指令】
 本次写作必须使用 {selected_opening}
