@@ -160,16 +160,16 @@ class TrendSearchSkill(BaseSkill):
         
         # 定义种子词分类 (基于关键词匹配)
         SEED_GROUPS = {
-            "产品类": ["礼盒", "纸箱", "飞机盒", "手提袋", "包装盒", "纸盒", "彩盒", "内托", "内衬"],
-            "工艺类": ["烫金", "UV", "覆膜", "击凸", "印刷", "模切", "制版"],
-            "行业趋势": ["国潮", "极简", "智能", "可降解", "碳中和", "数字化", "AI", "趋势"],
-            "展会活动": ["展", "会", "峰会", "论坛", "大赛"],
-            "通用转化": ["定制", "厂家", "批发", "源头", "直销", "免费", "报价"]
+            "主包装(纸/塑/铁)": ["礼盒", "纸箱", "飞机盒", "手提袋", "包装盒", "彩盒", "内托", "内衬", "马口铁盒", "铁罐", "PET盒", "胶盒", "铁盒"],
+            "泛周边(谷子/物料)": ["吧唧", "徽章", "镭射票", "小卡", "抽赏卡牌", "贴纸", "不干胶", "镭射贴", "开箱感谢卡", "说明书", "盲盒机"],
+            "工艺类": ["烫金", "UV", "覆膜", "击凸", "印刷", "模切", "制版", "烫银"],
+            "行业趋势": ["国潮", "极简", "智能", "可降解", "碳中和", "出海", "合规", "亚马逊FBA", "AI打样"],
+            "通用转化": ["定制", "厂家", "批发", "源头", "代发", "一件起订", "报价", "打样"]
         }
         
         # 按日期选择主力分组 (0=周一, 6=周日)
         weekday = datetime.now().weekday()
-        group_schedule = ["产品类", "工艺类", "行业趋势", "展会活动", "通用转化", "产品类", "行业趋势"]
+        group_schedule = ["主包装(纸/塑/铁)", "泛周边(谷子/物料)", "工艺类", "行业趋势", "主包装(纸/塑/铁)", "泛周边(谷子/物料)", "通用转化"]
         primary_group = group_schedule[weekday]
         
         # 分类种子词
@@ -337,7 +337,7 @@ class TrendSearchSkill(BaseSkill):
                     data = resp.json()
                     if data.get("success"):
                         for item in data["data"].get("list", [])[:10]:
-                            if any(k in item.get("title", "") for k in ["包装","礼盒","送礼"]):
+                            if any(k in item.get("title", "") for k in ["包装","礼盒","送礼","吧唧","贴纸","盲盒","小卡","文创","不干胶"]):
                                 trends.append(f"[小红书] {item['title']}")
                         break
             except Exception as e:
@@ -351,7 +351,7 @@ class TrendSearchSkill(BaseSkill):
 
     def _fetch_google_trends(self, seeds):
         trends = []
-        keywords = ["custom packaging", "gift box wholesale", "mailer box"]
+        keywords = ["custom packaging", "custom stickers", "custom badges", "tin box wholesale", "custom mailer box", "acrylic keychain"]
         for kw in keywords:
             try:
                 url = f"https://trends.google.com/trends/api/autocomplete/{kw.replace(' ', '%20')}?hl=en-US"
