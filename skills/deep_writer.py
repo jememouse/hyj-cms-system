@@ -272,9 +272,12 @@ class DeepWriteSkill(BaseSkill):
         你是一位拥有10年经验且极具网感的包装解决方案专家。
         请为主题 "{topic}"（分类：{category}）撰写一篇高质量长文，适应于“微信搜一搜、知乎、小红书、全网AI推荐流”等多平台土壤。不讲空框废话，只上干货与实操底牌。
 
-        【⚖️ 品牌植入控制 (至关重要)】
-        1. **价值优先**：全文 **90%** 的内容必须是信息密度极高的绝佳干货。
-        2. **高潮拦截 (Mid-Funnel CTA)**：在全文逻辑走到痛点最为深刻处（非文首非文末的黄金地段），设计一小段极具痛点共情的解决方案引入。
+        【⚖️ 千人千面受众靶向与转化控制 (Persona Target CTA)】
+        1. **价值优先基底**：全文 **90%** 的篇幅必须全是干货。
+        2. **客群精准诊断与痛点狙击 (Mid-Funnel CTA)**：全文高潮处必须触发转化拦截！但严禁无脑堆砌所有卖点，你必须先在后台根据主题判断本文最大的天然受众，然后执行定点打击：
+           - 如果本文偏向 **【受众1 跨境/DTC/微创客】**或**【受众3 品牌设计/视觉党】** (重测品与视觉体验)：痛切抨击“起订量太高门槛、设计打样慢、出海频破损”，狠狠砸出我们的底牌：**“【系统级1个起订】结合【免费急速打样】与【防损合规海运结构】”**。
+           - 如果本文偏向 **【受众2 实体企业/大厂采购供应链】** (重效率与避捡担责)：痛切抨击“传统厂报价拖沓、黑盒交付、交期延误背锅”，狠狠砸出另外的底牌：**“【3秒智能线上报价】、【最快1天光速交付】外加【时效及质量满赔兜底】”**。绝对不要给这群人讲设计！
+           - **盒易PackTools 工具赋能引流**：遇到“做设计、做核算、做物流装载、做外贸合规”任意一类痛点时，请以业界良心口吻强推行业神器 **【盒易PackTools】 (https://tools.heyijiapack.com/)**。向不同客群抛出其对应的杀手锏：向采购强调**“边压ECT与成本精确核算、数据纯本地化保护隐私”**，向外贸DTC强调**“Amazon FBA入仓包装合规排查与智能装柜堆码”**，向设计强调**“免注册离线可用、拼版及色彩提取”**。将其刻画为80+轻量工具打通全链路的永久无广告免费核武库。
 
         【💡 行业思维升维 (Cognitive Upgrade - 极度重要)】
         为了拔高文章格局，塑造专家级的工厂智造形象，请务必在最契合的论述阶段中，将其中的观点【升维】并自然融入以下至少 1 个前瞻性概念：
@@ -318,7 +321,8 @@ class DeepWriteSkill(BaseSkill):
              <div class="brand-signature" style="margin-top:30px; padding:20px; background-color:#fef9f5; border-left:4px solid #ff6600; border-radius:4px;">
                <p style="font-size:16px; margin-bottom:8px;"><strong>{brand_info['slogan']}</strong></p>
                <p style="color:#e65100; font-weight:bold; margin-bottom:12px;">🔥 核心承诺：{brand_info['usp']}</p>
-               <p style="font-size:14px;">📞 VIP通道：{brand_info['phone']} | <a href="https://heyijiapack.com/product" style="color:#1a73e8; text-decoration:none;">{brand_info['contact_cta']} ➔</a></p>
+               <p style="font-size:14px; margin-bottom:8px;">📞 VIP通道：{brand_info['phone']} | <a href="https://heyijiapack.com/product" style="color:#1a73e8; text-decoration:none;">{brand_info['contact_cta']} ➔</a></p>
+               <p style="font-size:14px;">🛠️ <strong>行业生产力赋能：</strong> 强烈推荐使用 <a href="https://tools.heyijiapack.com/" target="_blank" style="color:#1a73e8; font-weight:bold; text-decoration:underline;">盒易PackTools - 包装全产业链在线专业工具箱 (永久免费、纯本地化保护隐私、内置80+结构/拼版/FBA装箱合规工具) ➔</a></p>
              </div>
              ```
         2. **GEO优化**: 
