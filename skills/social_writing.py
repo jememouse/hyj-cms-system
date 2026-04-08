@@ -6,8 +6,7 @@ import random
 from typing import Dict, Any
 
 from core.skill import BaseSkill
-from shared import config
-from shared.utils import call_llm
+from shared import config, llm_utils
 
 class SocialWriterSkill(BaseSkill):
     """
@@ -156,9 +155,8 @@ class SocialWriterSkill(BaseSkill):
 }}
 """
 
-        # 3. 调用 LLM
         try:
-            resp = call_llm(
+            resp = llm_utils.call_llm_with_retry(
                 prompt=user_prompt,
                 system_prompt=system_prompt,
                 model=config.LLM_MODEL,

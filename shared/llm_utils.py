@@ -199,15 +199,10 @@ def call_llm_with_retry(
 
         return None  # 该通道所有重试均失败
 
-    # ── 免费前置通道: Google GenAI 模型 ──
-    # 判断是否被指令强制解耦到其他模型平台
-    force_skip_google = False
-    if model and ("gemma" not in model.lower() and "gemini" not in model.lower()) and model != getattr(config, 'GOOGLE_GENAI_MODEL', ''):
-        force_skip_google = True
-
-    if not force_skip_google and hasattr(config, 'GOOGLE_GENAI_API_KEY') and config.GOOGLE_GENAI_API_KEY:
-        use_google_model = model if model and ("gemma" in model.lower() or "gemini" in model.lower()) else config.GOOGLE_GENAI_MODEL
-        print(f"   🆓 尝试使用 Google GenAI 前置通道 ({use_google_model})...")
+    # ── 前置首选通道: Google GenAI 模型 ──
+    if hasattr(config, 'GOOGLE_GENAI_API_KEY') and config.GOOGLE_GENAI_API_KEY:
+        use_google_model = model if model and ("gemma" in model.lower() or "gemini" in model.lower()) else getattr(config, 'GOOGLE_GENAI_MODEL', 'gemini-3.1-flash-lite-preview')
+        print(f"   🚀 尝试使用 Google GenAI 前置通道 ({use_google_model})...")
         try:
             from google import genai
             from google.genai import types
@@ -243,7 +238,7 @@ def call_llm_with_retry(
         except Exception as e:
             print(f"   ⚠️ [Google GenAI] 客户端初始化异常: {e}")
             
-        print("   ⚠️ 免费前置通道失败，即将降级到原有主通道策略...")
+        print("   ⚠️ 前置通道失败，即将降级到原有主通道策略...")
 
     # ── 主通道: DeepSeek 官方 ──
     primary_model = model or config.LLM_MODEL
