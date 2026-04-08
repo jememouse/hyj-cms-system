@@ -48,6 +48,29 @@ class TrendSearchSkill(BaseSkill):
             client = GoogleSheetClient()
             if client.client: # 确认连接成功
                 print("📦 正在连接 Google Sheets 读取 `keywords_lib` 蓄水池...")
+                
+                # --- [新增] 自愈逻辑: 检测并回滚上一次意外崩溃留下的孤儿记录 ---
+                tracker_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "pending_seeds.json")
+                if os.path.exists(tracker_file):
+                    try:
+                        with open(tracker_file, 'r', encoding='utf-8') as f:
+                            pending_data = json.load(f)
+                        
+                        orphans = pending_data.get("pending_records", [])
+                        if orphans:
+                            print(f"⚠️ [Self-Healing] 发现 {len(orphans)} 个上次异常中断遗留的记录，启动回滚...")
+                            for orphan in orphans:
+                                rec_id = orphan.get("record_id")
+                                if rec_id:
+                                    client.update_record(rec_id, {"Status": "Unused"}, table_id="keywords_lib")
+                            print("✅ [Self-Healing] 回滚完成，释放被锁定的种子词。")
+                    except Exception as e:
+                        print(f"❌ [Self-Healing] 修复状态异常: {e}")
+                    finally:
+                        if os.path.exists(tracker_file):
+                            os.remove(tracker_file)
+                # -------------------------------------------------------------
+
                 pull_limit = 20
                 
                 # 兼容两种状态：留空 ("") 或者填了 "Unused"
@@ -56,6 +79,8 @@ class TrendSearchSkill(BaseSkill):
                     unused_records.extend(client.fetch_records_by_status("Unused", limit=pull_limit - len(unused_records), table_id="keywords_lib"))
                     
                 externals = []
+                new_pending_records = []
+                
                 if unused_records:
                     for r in unused_records:
                         kw = str(r.get("Keyword", "")).strip()
@@ -70,7 +95,21 @@ class TrendSearchSkill(BaseSkill):
                                     "Status": "Used",
                                     "词条使用时间": now_str
                                 }, table_id="keywords_lib")
-                    
+                                
+                                # 将该词条及其 ID 记录到本地快照，用于出错后的二阶段提交回滚
+                                new_pending_records.append({
+                                    "record_id": rec_id,
+                                    "keyword": kw,
+                                    "pulled_at": now_str
+                                })
+                                
+                    if new_pending_records:
+                        # 确保 data 目录存在
+                        os.makedirs(os.path.dirname(tracker_file), exist_ok=True)
+                        with open(tracker_file, 'w', encoding='utf-8') as f:
+                            json.dump({"pending_records": new_pending_records}, f, ensure_ascii=False, indent=2)
+                        print(f"✅ [CheckPoint] 已将 {len(new_pending_records)} 个锁定词条记入本地快照备份。")
+
                     if externals:
                         all_trends.extend(externals)
                         print(f"✅ 成功从云端蓄水池滴灌了 {len(externals)} 个高优词条到本批次")

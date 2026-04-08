@@ -34,4 +34,75 @@ class TrendWorkflow(BaseWorkflow):
         return self.agent.hunt_and_analyze(job)
 
     def on_success(self, job: dict, topics: list):
+        # 1. 正常推送生成的话题
         self.bus.push_new_topics(topics)
+        
+        # 2. 对账与清算逻辑
+        tracker_file = os.path.join(BASE_DIR, "data", "pending_seeds.json")
+        if os.path.exists(tracker_file):
+            try:
+                with open(tracker_file, 'r', encoding='utf-8') as f:
+                    pending_data = json.load(f)
+                
+                orphans = pending_data.get("pending_records", [])
+                if orphans:
+                    # 获取本次成功消费的所有词条核心词
+                    consumed_kws = set()
+                    if topics:
+                        import re
+                        for t in topics:
+                            st = t.get("Source_Trend", "")
+                            clean_st = re.sub(r'\[.*?\]\s*', '', st).strip()
+                            if clean_st:
+                                consumed_kws.add(clean_st)
+
+                    from shared.google_client import GoogleSheetClient
+                    client = GoogleSheetClient()
+                    
+                    if client.client:
+                        rollback_count = 0
+                        for orphan in orphans:
+                            kw = orphan.get("keyword", "")
+                            # 如果该词没有在任何一个成功生成的话题的 Source_Trend 里被映射到，说明被大模型丢弃或发生超时漏词
+                            if kw and kw not in consumed_kws:
+                                rec_id = orphan.get("record_id")
+                                if rec_id:
+                                    client.update_record(rec_id, {"Status": "Unused"}, table_id="keywords_lib")
+                                    rollback_count += 1
+                                    
+                        if rollback_count > 0:
+                            print(f"🔄 [Reconcile] 本地对账完毕，发现 {rollback_count} 个脱落种子词，已安全回拨为 Unused。")
+                        else:
+                            print("✅ [Reconcile] 本地对账完毕，所有种子词均成功消费，无脱落。")
+            except Exception as e:
+                print(f"❌ [Reconcile] 对账异常: {e}")
+            finally:
+                if os.path.exists(tracker_file):
+                    os.remove(tracker_file)
+
+    def on_failure(self, job: dict, error):
+        # 覆写失败机制，遇到全盘崩溃时全量回拨
+        tracker_file = os.path.join(BASE_DIR, "data", "pending_seeds.json")
+        if os.path.exists(tracker_file):
+            try:
+                with open(tracker_file, 'r', encoding='utf-8') as f:
+                    pending_data = json.load(f)
+                
+                orphans = pending_data.get("pending_records", [])
+                if orphans:
+                    print(f"⚠️ [Reconcile] 发现进程彻底失败，正在全量回滚 {len(orphans)} 个锁定的种子词...")
+                    from shared.google_client import GoogleSheetClient
+                    client = GoogleSheetClient()
+                    if client.client:
+                        for orphan in orphans:
+                            rec_id = orphan.get("record_id")
+                            if rec_id:
+                                client.update_record(rec_id, {"Status": "Unused"}, table_id="keywords_lib")
+                        print("✅ [Reconcile] 全量回滚完毕，种子词已安全释放。")
+            except Exception as e:
+                print(f"❌ [Reconcile] 回滚异常: {e}")
+            finally:
+                if os.path.exists(tracker_file):
+                    os.remove(tracker_file)
+
+        super().on_failure(job, error)
