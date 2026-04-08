@@ -23,6 +23,10 @@ LLM_API_KEY = DEEPSEEK_API_KEY
 LLM_API_URL = "https://api.deepseek.com/v1/chat/completions"
 LLM_MODEL = "deepseek-chat"
 
+# 业务解耦模型设置 (可被环境变量覆写)
+TITLE_MODEL = os.getenv("TITLE_MODEL", LLM_MODEL)          # 标题通常需要速度，复用基础大发即可
+ARTICLE_MODEL = os.getenv("ARTICLE_MODEL", LLM_MODEL)      # 长文通常需要逻辑能力，推荐覆写为 deepseek-reasoner 或同级专有模型
+
 # 备用通道: OpenRouter (当主通道重试耗尽后自动切换)
 FALLBACK_API_KEY = OPENROUTER_API_KEY
 FALLBACK_API_URL = "https://openrouter.ai/api/v1/chat/completions"

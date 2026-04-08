@@ -88,7 +88,7 @@ class DeepWriteSkill(BaseSkill):
             source_trend=source_trend
         )
 
-        return llm_utils.call_llm_json(prompt, temperature=0.85, max_retries=2)
+        return llm_utils.call_llm_json(prompt, model=config.ARTICLE_MODEL, temperature=0.85, max_retries=2)
 
     def _get_geo_strategy(self, category: str):
         """

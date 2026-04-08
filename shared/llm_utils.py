@@ -200,8 +200,14 @@ def call_llm_with_retry(
         return None  # 该通道所有重试均失败
 
     # ── 免费前置通道: Google GenAI 模型 ──
-    if hasattr(config, 'GOOGLE_GENAI_API_KEY') and config.GOOGLE_GENAI_API_KEY:
-        print(f"   🆓 尝试使用 Google GenAI 前置通道 ({config.GOOGLE_GENAI_MODEL})...")
+    # 判断是否被指令强制解耦到其他模型平台
+    force_skip_google = False
+    if model and ("gemma" not in model.lower() and "gemini" not in model.lower()) and model != getattr(config, 'GOOGLE_GENAI_MODEL', ''):
+        force_skip_google = True
+
+    if not force_skip_google and hasattr(config, 'GOOGLE_GENAI_API_KEY') and config.GOOGLE_GENAI_API_KEY:
+        use_google_model = model if model and ("gemma" in model.lower() or "gemini" in model.lower()) else config.GOOGLE_GENAI_MODEL
+        print(f"   🆓 尝试使用 Google GenAI 前置通道 ({use_google_model})...")
         try:
             from google import genai
             from google.genai import types
@@ -215,7 +221,7 @@ def call_llm_with_retry(
             for attempt in range(max_retries + 1):
                 try:
                     response = client.models.generate_content(
-                        model=config.GOOGLE_GENAI_MODEL,
+                        model=use_google_model,
                         contents=prompt_text,
                         config=types.GenerateContentConfig(
                             temperature=temperature,

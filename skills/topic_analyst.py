@@ -7,7 +7,7 @@ from typing import List, Dict
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core.skill import BaseSkill
-from shared import llm_utils
+from shared import config, llm_utils
 
 # 配置 logger
 logger = logging.getLogger(__name__)
@@ -130,7 +130,7 @@ class TopicAnalysisSkill(BaseSkill):
         ]
         不要返回 Markdown。
         """
-        res = llm_utils.call_llm_json_array(prompt, temperature=0.7, max_retries=2)
+        res = llm_utils.call_llm_json_array(prompt, model=config.TITLE_MODEL, temperature=0.7, max_retries=2)
         analyzed_trends = res if res else []
         
         # === Fallback: 确保数量达标 ===
@@ -239,7 +239,7 @@ class TopicAnalysisSkill(BaseSkill):
         """
         
         # 为了一次吞吐大量文本，可能需要更高的容错时间 (使用 shared 工具底层的 requests 已经配了 timeout=90)
-        res = llm_utils.call_llm_json_array(prompt, temperature=0.7, max_retries=2)
+        res = llm_utils.call_llm_json_array(prompt, model=config.TITLE_MODEL, temperature=0.7, max_retries=2)
         return res if res else []
 
     def _clean_category(self, cat):
