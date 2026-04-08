@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import re
 import time
 import random
 from datetime import datetime
@@ -33,7 +34,11 @@ class ArticleWorkflow(BaseWorkflow):
     def process_job(self, job: dict):
         source_trend = job.get('Source_Trend', '')
         if source_trend:
-            print(f"   🔥 [Newsjacking] 关联热点: {source_trend}")
+            # 清洗内部标签，防止 LLM 在正文中产生 "[外部指定]"、"[百度]" 等标识词幻觉
+            clean_trend = re.sub(r'\[.*?\]\s*', '', source_trend).strip()
+            print(f"   🔥 [Newsjacking] 关联热点: {clean_trend} (原始匹配: {source_trend})")
+            source_trend = clean_trend
+
         return self.editor.write_article(
             job['Topic'],
             job['大项分类'],
