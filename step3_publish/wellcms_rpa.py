@@ -632,9 +632,9 @@ class WellCMSPublisher:
             for selector, value in seo_data.items():
                 if value:
                     try:
-                        self.page.fill(selector, value, timeout=2000)
-                    except Exception:
-                        pass
+                        self.page.locator(selector).first.fill(value, timeout=2000)
+                    except Exception as e:
+                        print(f"      ⚠️ 填写 SEO 字段失败 {selector}: {e}")
             
             # 勾选"禁止评论"
             self.page.evaluate("""() => {
@@ -650,9 +650,9 @@ class WellCMSPublisher:
             if tags:
                 try:
                     tag_selector = '#tags, #tag, input[name="tags"], input[name="tag"]'
-                    self.page.fill(tag_selector, tags, timeout=2000)
+                    self.page.locator(tag_selector).first.fill(tags, timeout=2000)
                     # 某些标签系统（比如 token input）需要按回车或空格才能生成真正的数据块
-                    self.page.press(tag_selector, 'Enter')
+                    self.page.keyboard.press('Enter')
                     print(f"      🏷️ 已填写 tags: {tags}")
                 except Exception as e:
                     print(f"      ⚠️ 填写 tags 失败: {e}")
