@@ -16,7 +16,7 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 
 # 前置首选通道: Google GenAI 模型 (所有生成流程优先使用)
 GOOGLE_GENAI_API_KEY = os.getenv("GOOGLE_GENAI_API_KEY", "").strip()
-GOOGLE_GENAI_MODEL = "gemini-3-flash-preview"
+GOOGLE_GENAI_MODEL = "gemini-3.1-flash-lite-preview"
 
 # 主通道: DeepSeek 官方直连
 LLM_API_KEY = DEEPSEEK_API_KEY

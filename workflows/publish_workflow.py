@@ -118,15 +118,40 @@ class PublishWorkflow(BaseWorkflow):
                 self.bus.mark_as_ready_to_retry(record['record_id'])
                 continue
 
+            # --- 解析 tags 和 summary 的逻辑 ---
+            raw_tags = str(record.get('Tags', ''))
+            parsed_tags = raw_tags
+            if raw_tags.startswith('[') and raw_tags.endswith(']'):
+                import json
+                try:
+                    tag_list = json.loads(raw_tags)
+                    if isinstance(tag_list, list):
+                        parsed_tags = ", ".join(str(t) for t in tag_list)
+                except Exception:
+                    pass
+            
+            summary_val = str(record.get('摘要', ''))
+            if summary_val == 'None':
+                summary_val = ''
+            one_line = str(record.get('One_Line_Summary', ''))
+            if one_line == 'None':
+                one_line = ''
+                
+            # 优先使用 One_Line_Summary 作为 brief，以防摘要被大模型充当成 "SEO Description..." 等无意义占位符
+            if one_line and len(one_line) > 5 and "SEO Description" not in one_line:
+                summary_val = one_line
+            elif not summary_val or "SEO Description" in summary_val:
+                summary_val = one_line
+
             # [Publish] 账号 Round-Robin 轮换
             article_data = {
                 "title": record.get('Title'),
                 "html_content": record.get('HTML_Content'),
                 "category_id": config.CATEGORY_MAP.get(str(record.get('大项分类', '')).strip(), "1"),
-                "summary": record.get('摘要'),
+                "summary": summary_val,
                 "keywords": record.get('关键词'),
                 "description": record.get('描述'),
-                "tags": record.get('Tags')
+                "tags": parsed_tags
             }
 
             account = self.active_accounts[idx % len(self.active_accounts)] if self.active_accounts else {}

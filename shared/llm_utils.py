@@ -201,7 +201,7 @@ def call_llm_with_retry(
 
     # ── 前置首选通道: Google GenAI 模型 ──
     if hasattr(config, 'GOOGLE_GENAI_API_KEY') and config.GOOGLE_GENAI_API_KEY:
-        use_google_model = model if model and ("gemma" in model.lower() or "gemini" in model.lower()) else getattr(config, 'GOOGLE_GENAI_MODEL', 'gemini-3-flash-preview')
+        use_google_model = model if model and ("gemma" in model.lower() or "gemini" in model.lower()) else getattr(config, 'GOOGLE_GENAI_MODEL', 'gemini-3.1-flash-lite-preview')
         print(f"   🚀 尝试使用 Google GenAI 前置通道 ({use_google_model})...")
         try:
             from google import genai
