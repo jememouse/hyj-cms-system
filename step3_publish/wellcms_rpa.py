@@ -622,7 +622,7 @@ class WellCMSPublisher:
                 logger.error(f"封面图逻辑错误: {e}")
             # -------------------------------------------------------------------
             
-            # 填写 SEO 字段 (使用 fill 触发事件，比 evaluate 更安全)
+            # 填写 SEO 字段 (使用 fill 触发事件，若元素不可见则用 evaluate 强制赋值)
             seo_data = {
                 '#brief, textarea[name="brief"]': article.get('summary', ''),
                 '#keyword, input[name="keyword"]': article.get('keywords', ''),
@@ -634,7 +634,15 @@ class WellCMSPublisher:
                     try:
                         self.page.locator(selector).first.fill(value, timeout=2000)
                     except Exception as e:
-                        print(f"      ⚠️ 填写 SEO 字段失败 {selector}: {e}")
+                        try:
+                            # 兜底：如果元素不可见（例如在折叠面板中），使用 JS 强制渲染并派发事件
+                            self.page.locator(selector).first.evaluate(
+                                "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }",
+                                value
+                            )
+                            print(f"      🛡️ 强制注入 SEO 字段 (不可见元素): {selector}")
+                        except Exception as inner_e:
+                            print(f"      ⚠️ 填写 SEO 字段失败 {selector}: {inner_e}")
             
             # 勾选"禁止评论"
             self.page.evaluate("""() => {
@@ -645,14 +653,21 @@ class WellCMSPublisher:
             }""")
             time.sleep(0.5)
             
-            # 填写 tags (兼容多个常见命名，并尝试回车触发)
+            # 填写 tags (兼容多个常见命名，处理 type="hidden" 等不可见元素的情况)
             tags = article.get('tags', '')
             if tags:
                 try:
                     tag_selector = '#tags, #tag, input[name="tags"], input[name="tag"]'
-                    self.page.locator(tag_selector).first.fill(tags, timeout=2000)
-                    # 某些标签系统（比如 token input）需要按回车或空格才能生成真正的数据块
-                    self.page.keyboard.press('Enter')
+                    try:
+                        self.page.locator(tag_selector).first.fill(tags, timeout=2000)
+                        # 某些标签系统需要按回车才能生成数据块
+                        self.page.keyboard.press('Enter')
+                    except Exception:
+                        # 兜底：如果 tags 框是不可见的 (如 type="hidden" 插件)，直接强插
+                        self.page.locator(tag_selector).first.evaluate(
+                            "(el, val) => { el.value = val; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }",
+                            tags
+                        )
                     print(f"      🏷️ 已填写 tags: {tags}")
                 except Exception as e:
                     print(f"      ⚠️ 填写 tags 失败: {e}")

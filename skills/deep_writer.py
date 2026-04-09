@@ -294,8 +294,13 @@ class DeepWriteSkill(BaseSkill):
            - **严禁改写**: 直接使用输入的 "{topic}" 作为 H1 标题。
            - **例外**: 只有当原标题包含明显错别字时才可微调。
            - **SEO 转移**: 将 "地域名({selected_city}) + 核心关键词" 自然融入到 **第一段开头** 或 **H2 副标题** 中，不要破坏 H1 的悬念感。
-        6. **Meta**: 120-160 字符。必须包含 "{brand_name}" 和 "{selected_city}"。
-        7. **URL Slug**: SEO 友好的英文 URL (e.g. "packaging-guide-2025")。
+        6. **CMS SEO 字段严格约束 (极度重要，防数据库报错)**:
+           - **绝对禁止 Emoji**: JSON 结构中的 `summary`, `keywords`, `description`, `tags` 这 4 个字段中**严禁包含任何 Emoji 图标或特殊颜文字** (因旧版 CMS 数据库不支持 utf8mb4)。
+           - `summary` (简介): 纯文本摘要，严格限制在 **120 字以内**。必须包含 "{selected_city}" 和 "{brand_name}"。
+           - `description` (SEO描述): 纯文本，120-150 字。
+           - `keywords` (SEO关键字): 必须使用**英文逗号**分隔的短词，总长度不超过 **64 字符** (如: "包装厂,定制纸箱,物流防损")。
+           - `tags` (标签): 必须使用**英文逗号**分隔的 3-5 个分类词，绝不能带数字序号或 `#` 号。
+        7. **URL Slug**: SEO 友好的英文 URL (e.g. "packaging-guide-{current_year}")。
         8. **JSON 输出**:
         
         {{
