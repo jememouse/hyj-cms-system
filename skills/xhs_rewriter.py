@@ -61,7 +61,8 @@ class XHSRewriterSkill(BaseSkill):
         result = llm_utils.call_llm_json(
             prompt=prompt,
             system_prompt=self.SYSTEM_PROMPT,
-            temperature=1.3,
+            model=config.ARTICLE_MODEL,
+            temperature=0.85,
             max_retries=2
         )
         

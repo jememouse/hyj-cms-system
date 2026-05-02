@@ -162,7 +162,7 @@ class SocialWriterSkill(BaseSkill):
             resp = llm_utils.call_llm_with_retry(
                 prompt=user_prompt,
                 system_prompt=system_prompt,
-                model=config.LLM_MODEL,
+                model=config.ARTICLE_MODEL,
                 temperature=0.85 # 稍微高一点增加创意
             )
             
