@@ -23,13 +23,13 @@ LLM_MODEL = "deepseek-v4-flash"
 DEEPSEEK_THINKING_ENABLED = True   # 开启思考模式 (思维链推理)
 DEEPSEEK_REASONING_EFFORT = "high" # 思考强度: "high" (默认) 或 "max" (复杂任务)
 
-# 业务解耦模型设置 (可被环境变量覆写)
-TITLE_MODEL = os.getenv("TITLE_MODEL", LLM_MODEL)          # 标题生成
-ARTICLE_MODEL = os.getenv("ARTICLE_MODEL", LLM_MODEL)      # 长文写作
-
 # 二级备用通道: Google GenAI (当主通道失败后切换)
 GOOGLE_GENAI_API_KEY = os.getenv("GOOGLE_GENAI_API_KEY", "").strip()
 GOOGLE_GENAI_MODEL = "gemini-3.1-flash-lite-preview"
+
+# 业务解耦模型设置 (可被环境变量覆写)
+TITLE_MODEL = os.getenv("TITLE_MODEL", GOOGLE_GENAI_MODEL)          # 标题生成
+ARTICLE_MODEL = os.getenv("ARTICLE_MODEL", GOOGLE_GENAI_MODEL)      # 长文写作
 
 # 三级兜底通道: OpenRouter (所有通道失败后最终兜底)
 FALLBACK_API_KEY = OPENROUTER_API_KEY
