@@ -35,7 +35,10 @@ jobs:
 
     - name: Install Playwright browsers
       run: |
-        sudo apt-get update || true
+        # 替换有问题的 Azure 镜像源为 Ubuntu 官方源，避免 DNS 解析失败卡死
+        sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/g' /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null || true
+        sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/g' /etc/apt/sources.list 2>/dev/null || true
+        sudo timeout 60s apt-get update || true
         uv run playwright install chromium --with-deps
 
     - name: Run Step3 - RPA 发布 (${{ matrix.category }})
