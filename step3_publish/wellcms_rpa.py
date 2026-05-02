@@ -118,6 +118,26 @@ class WellCMSPublisher:
             except Exception as e:
                 logger.warning(f"Pixabay 获取异常: {e}")
 
+        # 3. 终极兜底 (Last Resort Fallback)
+        # 如果所有 API (Pexels, Pixabay) 都没有配置或配额耗尽，为了严格执行“一定要有图片”的指令，
+        # 我们在这里内置几个高质感、泛用性极强的通用包装盒/环保纸箱开源静态图直链。
+        try:
+            logger.info("🔄 触发终极兜底：使用内置静态包装通用图库...")
+            import random
+            static_fallbacks = [
+                "https://images.pexels.com/photos/1666067/pexels-photo-1666067.jpeg?auto=compress&cs=tinysrgb&w=800", # 纸箱质感
+                "https://images.pexels.com/photos/7256123/pexels-photo-7256123.jpeg?auto=compress&cs=tinysrgb&w=800", # 物流打包
+                "https://images.pexels.com/photos/6169046/pexels-photo-6169046.jpeg?auto=compress&cs=tinysrgb&w=800", # 环保纸包装
+                "https://images.pexels.com/photos/5062828/pexels-photo-5062828.jpeg?auto=compress&cs=tinysrgb&w=800", # 堆叠纸箱
+                "https://images.pexels.com/photos/45982/pexels-photo-45982.jpeg?auto=compress&cs=tinysrgb&w=800"    # 高端礼盒丝带
+            ]
+            img_url = random.choice(static_fallbacks)
+            img_resp = requests.get(img_url, headers={"User-Agent": self.session.headers["User-Agent"]}, timeout=10)
+            if img_resp.status_code == 200 and len(img_resp.content) > 10240:
+                return img_resp.content, img_url
+        except Exception as e:
+            logger.warning(f"终极静态兜底图获取异常: {e}")
+
         return None, ""
 
     def _publish_article(self, article: Dict) -> Tuple[bool, str]:
@@ -149,10 +169,17 @@ class WellCMSPublisher:
         if img_match:
             original_img_url = img_match.group(1).replace('&amp;', '&')
             try:
+                fetch_url = original_img_url
+                pollinations_keys = getattr(config, 'POLLINATIONS_API_KEYS', [])
+                if "pollinations" in original_img_url.lower() and pollinations_keys:
+                    import random
+                    selected_key = random.choice(pollinations_keys)
+                    fetch_url += f"&key={selected_key}"
+                    
                 # 给予 AI 图片较长超时
                 timeout = 30 if "pollinations" in original_img_url.lower() else 15
-                logger.info(f"📥 正在下载正文图片 (可能耗时): {original_img_url[:80]}...")
-                resp = requests.get(original_img_url, headers={"User-Agent": self.session.headers["User-Agent"]}, timeout=timeout)
+                logger.info(f"📥 正在下载正文图片 (可能耗时): {fetch_url[:80]}...")
+                resp = requests.get(fetch_url, headers={"User-Agent": self.session.headers["User-Agent"]}, timeout=timeout)
                 # 10KB 以上认为有效（Pollinations 报错提示图往往很小）
                 if resp.status_code == 200 and len(resp.content) > 10240:
                     image_content = resp.content
