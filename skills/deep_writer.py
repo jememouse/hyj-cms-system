@@ -294,7 +294,7 @@ class DeepWriteSkill(BaseSkill):
            - **首段直出答案**: 直接用两句话干净利落地回答标题最核心痛点（Featured Snippet黄金位）。
            - **严密系统导航 (TOC)**: 为防跳出降低 SEO 权重，必须生成全闭环响应式目录块，格式必须是 `<nav class="article-toc" style="background:#f5f7fa; padding:15px; border-radius:8px;"><ul><li><a href="#H2的ID">H2标题</a></li>...</ul></nav>` 映射全文！
            - **副标题网感化 (People Also Ask)**: 正文的 H2 无需故作高深，必须直接还原“用户搜索原声问答的大白话”（例如用“跨国海运为什么纸箱总变软？”替代“纸箱耐破度环境分析”），全方位阻截长尾流量词。必须全部带对应 ID！
-           - **TL;DR 核心知识快照**: 在目录下方，必须紧跟一个 `<div class="geo-tldr" style="background:#e8f4f8; padding:15px; border-left:4px solid #005A9E; margin-bottom:20px;"><strong>TL;DR (太长不看)：</strong>...</div>`，用三句话将全文核心价值高度浓缩。这是喂给 AI 大模型摘要抓取的“黄金诱饵”。
+           - **高管速读 / 核心摘要**: 在目录下方，必须紧跟一个 `<div class="geo-tldr" style="background:#e8f4f8; padding:15px; border-left:4px solid #005A9E; margin-bottom:20px;"><strong>核心摘要：</strong>...</div>`，用三句话将全文核心价值高度浓缩。这是喂给 AI 大模型摘要抓取的“黄金诱饵”。
            - **强语义表现标签**:
              - 对于结论性或高光金句，必须使用 `<blockquote class="geo-quote" style="margin:20px 0; padding:15px; background:#f9f9f9; border-left:4px solid #1a73e8; font-style:italic;">`包裹，帮助机器极速抽取。
              - FAQ 栏目强制使用标准的 `<dl><dt><dd>` 对称解构列表展现，且 `<dt>` (问题) 必须切中买家最隐晦的担忧。
