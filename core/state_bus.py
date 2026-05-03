@@ -97,7 +97,8 @@ class StateBus:
                 "大项分类": r["category_name"],
                 "Status": r["status"],
                 "Source_Trend": r["source_trend"],
-                "created_at": r["created_at"]
+                "created_at": r["created_at"],
+                "选题生成时间": r["created_at"]
             }
             
         priority_topics = [_map_to_old_dict(r) for r in priority_topics]
@@ -201,7 +202,9 @@ class StateBus:
                 "HTML_Content": r["content_body"],
                 "摘要": r["summary"],
                 "关键词": r["keywords"],
-                "Tags": r["keywords"]
+                "Tags": r["keywords"],
+                "created_at": r["created_at"],
+                "选题生成时间": r["created_at"]
             }
         
         pending_records = [_map_to_old_dict(r) for r in records]
