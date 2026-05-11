@@ -1,0 +1,37 @@
+name: 每日发布数据统计报告
+
+on:
+  schedule:
+    # 每天北京时间 23:50 运行 (UTC时间 15:50)
+    - cron: '50 15 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  daily-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Install dependencies
+      run: uv sync
+
+    - name: Run Daily Report Script
+      env:
+        GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        FEISHU_WEBHOOK_URL: "https://open.feishu.cn/open-apis/bot/v2/hook/009c15b4-fb99-4eaa-82a7-f1a190083bfc"
+        FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+        FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        FEISHU_BASE_ID: ${{ secrets.FEISHU_BASE_ID }}
+        FEISHU_TABLE_ID: ${{ secrets.FEISHU_TABLE_ID }}
+        TZ: 'Asia/Shanghai'
+      run: |
+        uv run python scripts/daily_report.py
